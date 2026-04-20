@@ -63,7 +63,7 @@ export default function RegisterPanel() {
             <p style={{ color: "var(--text3)", fontSize: "13px", lineHeight: 1.8 }}>
               After registration, the Fabric CA will issue an X.509 certificate for this user, and the identity will be
               registered on-chain via{" "}
-              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--gold)", fontSize: "11px" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--primary)", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>
                 RegisterIdentity
               </span>
               .

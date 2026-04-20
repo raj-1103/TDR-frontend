@@ -81,9 +81,10 @@ export default function GraphPanel() {
                 let borderColor = "var(--border2)";
                 let textColor = "var(--text)";
                 let roleLabel = "Previous Owner";
-                if (isFirst) { borderColor = "var(--gold)"; textColor = "var(--gold2)"; roleLabel = "Original Owner"; }
-                if (isLast && chainNodes.length > 1) { borderColor = "var(--teal)"; textColor = "var(--teal)"; roleLabel = "Current Owner"; }
-                if (chainNodes.length === 1) { borderColor = "var(--gold)"; textColor = "var(--gold2)"; roleLabel = "Current Owner"; }
+                let bgColor = "var(--bg3)";
+                if (isFirst) { borderColor = "var(--primary-light)"; textColor = "var(--primary)"; roleLabel = "Original Owner"; bgColor = "var(--primary-dim)"; }
+                if (isLast && chainNodes.length > 1) { borderColor = "var(--teal)"; textColor = "var(--teal)"; roleLabel = "Current Owner"; bgColor = "var(--teal-dim)"; }
+                if (chainNodes.length === 1) { borderColor = "var(--primary-light)"; textColor = "var(--primary)"; roleLabel = "Current Owner"; bgColor = "var(--primary-dim)"; }
 
                 const shortLabel = label.length > 22 ? label.substring(0, 20) + "…" : label;
 
@@ -118,12 +119,12 @@ export default function GraphPanel() {
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                       <div
                         style={{
-                          background: "var(--card2)",
+                          background: bgColor,
                           border: `1px solid ${borderColor}`,
                           borderRadius: "8px",
                           padding: "10px 18px",
                           fontSize: "12px",
-                          fontWeight: 500,
+                          fontWeight: 600,
                           color: textColor,
                           whiteSpace: "nowrap",
                         }}
@@ -131,7 +132,7 @@ export default function GraphPanel() {
                       >
                         {shortLabel}
                       </div>
-                      <div style={{ fontSize: "10px", color: "var(--text3)", marginTop: "6px" }}>{roleLabel}</div>
+                      <div style={{ fontSize: "10px", color: "var(--text3)", marginTop: "6px", fontWeight: 500 }}>{roleLabel}</div>
                     </div>
                   </React.Fragment>
                 );
@@ -161,8 +162,8 @@ export default function GraphPanel() {
             <div
               style={{
                 fontSize: "11px",
-                fontWeight: 500,
-                color: "var(--text3)",
+                fontWeight: 600,
+                color: "var(--text2)",
                 textTransform: "uppercase",
                 letterSpacing: "1px",
                 marginBottom: "12px",
@@ -179,13 +180,14 @@ export default function GraphPanel() {
                         key={h}
                         style={{
                           fontSize: "11px",
-                          fontWeight: 500,
+                          fontWeight: 600,
                           textTransform: "uppercase",
                           letterSpacing: "1px",
                           color: "var(--text3)",
                           textAlign: "left",
                           padding: "10px 12px",
-                          borderBottom: "1px solid var(--border)",
+                          borderBottom: "2px solid var(--border)",
+                          background: "var(--bg3)",
                         }}
                       >
                         {h}

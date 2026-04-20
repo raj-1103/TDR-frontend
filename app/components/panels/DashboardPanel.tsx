@@ -8,16 +8,17 @@ export default function DashboardPanel() {
   const { setPanel } = useApp();
 
   const stats = [
-    { label: "Total Documents", value: "—", sub: "Uploaded to chain" },
-    { label: "TDRs Issued", value: "—", sub: "Active certificates" },
-    { label: "Transfers", value: "—", sub: "Ownership changes" },
-    { label: "EVM Anchored", value: "—", sub: "Cross-chain verified" },
+    { label: "Total Documents", value: "—", sub: "Uploaded to chain", color: "var(--blue)" },
+    { label: "TDRs Issued", value: "—", sub: "Active certificates", color: "var(--amber)" },
+    { label: "Transfers", value: "—", sub: "Ownership changes", color: "var(--teal)" },
+    { label: "EVM Anchored", value: "—", sub: "Cross-chain verified", color: "var(--primary)" },
   ];
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>
       {/* Stats row */}
       <div
+        className="dashboard-stats"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
@@ -32,22 +33,27 @@ export default function DashboardPanel() {
               background: "var(--card)",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius)",
-              padding: "20px",
+              padding: "22px",
+              boxShadow: "var(--shadow-sm)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <div style={{ fontSize: "11px", color: "var(--text3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "10px" }}>
+            {/* Accent strip */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: s.color }} />
+            <div style={{ fontSize: "11px", color: "var(--text3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px", fontWeight: 600 }}>
               {s.label}
             </div>
-            <div style={{ fontSize: "28px", fontFamily: "'DM Serif Display', serif", color: "var(--gold2)", lineHeight: 1 }}>
+            <div style={{ fontSize: "30px", fontWeight: 700, color: "var(--text)", lineHeight: 1 }}>
               {s.value}
             </div>
-            <div style={{ fontSize: "11px", color: "var(--text3)", marginTop: "6px" }}>{s.sub}</div>
+            <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "8px" }}>{s.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Cards row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+      <div className="dashboard-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
         <Card>
           <CardTitle icon="⊟">Quick Actions</CardTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -63,28 +69,31 @@ export default function DashboardPanel() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "10px",
-                  padding: "11px 16px",
+                  gap: "12px",
+                  padding: "12px 16px",
                   background: "var(--bg)",
-                  border: "1px solid var(--border2)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
                   color: "var(--text2)",
                   fontSize: "13px",
-                  fontFamily: "'Sora', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   cursor: "pointer",
                   textAlign: "left",
-                  transition: "all 0.15s",
+                  transition: "all 0.15s ease",
+                  fontWeight: 500,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--card2)";
-                  e.currentTarget.style.color = "var(--text)";
+                  e.currentTarget.style.background = "var(--primary-dim)";
+                  e.currentTarget.style.borderColor = "var(--primary-light)";
+                  e.currentTarget.style.color = "var(--primary)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "var(--bg)";
+                  e.currentTarget.style.borderColor = "var(--border)";
                   e.currentTarget.style.color = "var(--text2)";
                 }}
               >
-                <span style={{ fontSize: "16px" }}>{a.icon}</span>
+                <span style={{ fontSize: "16px", color: "var(--primary-light)" }}>{a.icon}</span>
                 {a.label}
               </button>
             ))}
@@ -102,7 +111,7 @@ export default function DashboardPanel() {
             <br />
             <p>
               Each document is hashed with{" "}
-              <span style={{ color: "var(--gold)", fontFamily: "'DM Mono', monospace", fontSize: "11px" }}>
+              <span style={{ color: "var(--primary)", fontFamily: "'DM Mono', monospace", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>
                 Keccak-256
               </span>{" "}
               and anchored to Ethereum for cross-chain verifiability.

@@ -8,9 +8,9 @@ import { apiGet } from "@/lib/api";
 
 const actionColor: Record<string, string> = {
   UPLOADED: "var(--blue)",
-  TDR_ISSUED: "var(--gold)",
+  TDR_ISSUED: "var(--amber)",
   TRANSFERRED: "var(--teal)",
-  ANCHORED: "#6dc06d",
+  ANCHORED: "#059669",
 };
 
 export default function HistoryPanel() {
@@ -65,8 +65,9 @@ export default function HistoryPanel() {
                 left: "7px",
                 top: "8px",
                 bottom: "8px",
-                width: "1px",
-                background: "var(--border2)",
+                width: "2px",
+                background: "var(--border)",
+                borderRadius: "1px",
               }}
             />
 
@@ -89,7 +90,7 @@ export default function HistoryPanel() {
                   />
 
                   {/* Content */}
-                  <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text)" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>
                     {entry.action.replace(/_/g, " ")}
                   </div>
                   <div style={{ fontSize: "11px", color: "var(--text3)", marginTop: "3px" }}>

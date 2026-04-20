@@ -53,7 +53,7 @@ export default function QueryPanel() {
           {!result ? (
             <p style={{ color: "var(--text3)", fontSize: "13px", lineHeight: 1.8 }}>
               Query reads directly from the Hyperledger Fabric ledger state using{" "}
-              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--gold)", fontSize: "11px" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--primary)", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>
                 EvaluateTransaction
               </span>{" "}
               — no ordering or endorsement required, instant read.

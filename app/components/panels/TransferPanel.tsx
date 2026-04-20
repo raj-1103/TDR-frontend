@@ -71,14 +71,15 @@ export default function TransferPanel() {
           </FormGroup>
           <div
             style={{
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
+              background: "var(--amber-dim)",
+              border: "1px solid rgba(217,119,6,0.15)",
               borderRadius: "8px",
               padding: "14px",
               marginBottom: "18px",
               fontSize: "12px",
-              color: "var(--text3)",
+              color: "var(--amber)",
               lineHeight: 1.7,
+              fontWeight: 500,
             }}
           >
             ⚠ Transfer triggers OCR extraction, PDF regeneration with new owner details, and EVM anchoring. This may

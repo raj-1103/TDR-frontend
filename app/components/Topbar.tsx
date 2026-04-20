@@ -17,7 +17,7 @@ const pageInfo: Record<Panel, [string, string]> = {
 };
 
 export default function Topbar() {
-  const { panel, apiBase, setApiBase } = useApp();
+  const { panel, apiBase, setApiBase, toggleSidebar, sidebarOpen } = useApp();
   const [title, sub] = pageInfo[panel];
 
   return (
@@ -26,15 +26,15 @@ export default function Topbar() {
       <div
         style={{
           background: "var(--card)",
-          borderBottom: "1px solid var(--gold)",
-          padding: "12px 32px",
+          borderBottom: "1px solid var(--border)",
+          padding: "10px 24px",
           display: "flex",
           alignItems: "center",
-          gap: "16px",
+          gap: "12px",
           flexWrap: "wrap",
         }}
       >
-        <label style={{ fontSize: "12px", color: "var(--gold)", fontWeight: 500, whiteSpace: "nowrap" }}>
+        <label style={{ fontSize: "12px", color: "var(--primary)", fontWeight: 600, whiteSpace: "nowrap" }}>
           API Base URL
         </label>
         <input
@@ -42,51 +42,79 @@ export default function Topbar() {
           onChange={(e) => setApiBase(e.target.value)}
           style={{
             flex: 1,
-            minWidth: "200px",
-            background: "var(--bg)",
-            border: "1px solid var(--border2)",
+            minWidth: "160px",
+            background: "var(--bg3)",
+            border: "1px solid var(--border)",
             borderRadius: "8px",
             padding: "7px 12px",
             color: "var(--text)",
             fontFamily: "'DM Mono', monospace",
             fontSize: "12px",
             outline: "none",
+            transition: "border-color 0.15s",
           }}
         />
-        <span style={{ fontSize: "11px", color: "var(--text3)" }}>All requests route through this endpoint</span>
+        <span className="topbar-hint" style={{ fontSize: "11px", color: "var(--text3)" }}>All requests route through this endpoint</span>
       </div>
 
       {/* Title bar */}
       <div
         style={{
-          padding: "20px 32px",
+          padding: "16px 24px",
           borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "var(--bg)",
+          background: "var(--card)",
           position: "sticky",
           top: 0,
           zIndex: 50,
+          boxShadow: "var(--shadow-sm)",
+          gap: "16px",
         }}
       >
-        <div>
-          <div style={{ fontSize: "18px", fontWeight: 500 }}>{title}</div>
-          <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>{sub}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* Hamburger menu button */}
+          <button
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+            style={{
+              background: sidebarOpen ? "var(--primary-dim)" : "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              padding: "0",
+              cursor: "pointer",
+              width: "38px",
+              height: "38px",
+              position: "relative",
+              flexShrink: 0,
+              transition: "background 0.15s ease",
+            }}
+          >
+            <span style={{ position: "absolute", left: "10px", top: "12px", width: "18px", height: "2px", background: "var(--text2)", borderRadius: "1px" }} />
+            <span style={{ position: "absolute", left: "10px", top: "18px", width: "18px", height: "2px", background: "var(--text2)", borderRadius: "1px" }} />
+            <span style={{ position: "absolute", left: "10px", top: "24px", width: "18px", height: "2px", background: "var(--text2)", borderRadius: "1px" }} />
+          </button>
+
+          <div>
+            <div style={{ fontSize: "18px", fontWeight: 600, color: "var(--text)" }}>{title}</div>
+            <div className="topbar-subtitle" style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>{sub}</div>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div className="topbar-status" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
               background: "var(--teal-dim)",
-              border: "1px solid rgba(77,217,172,0.2)",
-              padding: "6px 12px",
+              border: "1px solid rgba(5,150,105,0.15)",
+              padding: "6px 14px",
               borderRadius: "20px",
               fontSize: "11px",
               color: "var(--teal)",
-              fontWeight: 500,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
             }}
           >
             <span
@@ -96,9 +124,11 @@ export default function Topbar() {
                 borderRadius: "50%",
                 background: "var(--teal)",
                 animation: "pulse 2s infinite",
+                flexShrink: 0,
               }}
             />
-            Hyperledger Fabric · mychannel
+            <span className="fabric-label-full">Hyperledger Fabric · mychannel</span>
+            <span className="fabric-label-short">Fabric</span>
           </div>
         </div>
       </div>

@@ -71,17 +71,33 @@ export default function VerifyPanel() {
             padding: "28px",
             marginTop: "20px",
             animation: "fadeIn 0.2s ease",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
           <div
             style={{
-              fontFamily: "'DM Serif Display', serif",
-              fontSize: "32px",
+              fontSize: "28px",
+              fontWeight: 700,
               marginBottom: "20px",
               color: result.valid ? "var(--teal)" : "var(--red)",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
             }}
           >
-            {result.valid ? "✓ Authentic" : "✗ Tampered"}
+            <span style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: result.valid ? "var(--teal-dim)" : "var(--red-dim)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "20px",
+            }}>
+              {result.valid ? "✓" : "✗"}
+            </span>
+            {result.valid ? "Authentic" : "Tampered"}
           </div>
 
           <dl
@@ -94,7 +110,7 @@ export default function VerifyPanel() {
           >
             {detailRows.map(([label, value, mono]) => (
               <React.Fragment key={label}>
-                <dt style={{ color: "var(--text3)", fontWeight: 500 }}>{label}</dt>
+                <dt style={{ color: "var(--text3)", fontWeight: 600 }}>{label}</dt>
                 <dd
                   style={{
                     color: "var(--text)",

@@ -62,17 +62,17 @@ export default function UploadPanel() {
                 if (f) handleFile(f);
               }}
               style={{
-                border: `2px dashed ${drag ? "var(--gold)" : "var(--border2)"}`,
+                border: `2px dashed ${drag ? "var(--primary-light)" : "var(--border2)"}`,
                 borderRadius: "12px",
                 padding: "40px",
                 textAlign: "center",
                 cursor: "pointer",
                 transition: "all 0.2s",
-                background: drag ? "var(--gold-dim)" : "var(--bg)",
+                background: drag ? "var(--primary-dim)" : "var(--bg)",
               }}
             >
               <div style={{ fontSize: "36px", marginBottom: "12px" }}>📄</div>
-              <div style={{ fontSize: "14px", color: "var(--text2)" }}>Click or drag &amp; drop PDF</div>
+              <div style={{ fontSize: "14px", color: "var(--text2)", fontWeight: 500 }}>Click or drag &amp; drop PDF</div>
               <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "6px" }}>TDR original documents only</div>
             </div>
             <input
@@ -89,12 +89,12 @@ export default function UploadPanel() {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  background: "var(--card2)",
+                  background: "var(--bg3)",
                   padding: "8px 14px",
                   borderRadius: "8px",
                   fontSize: "12px",
                   color: "var(--text)",
-                  border: "1px solid var(--border2)",
+                  border: "1px solid var(--border)",
                 }}
               >
                 <span>📎</span>
@@ -118,9 +118,9 @@ export default function UploadPanel() {
           {!result ? (
             <p style={{ color: "var(--text3)", fontSize: "13px", lineHeight: 1.8 }}>
               The document will be hashed with{" "}
-              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--gold)", fontSize: "11px" }}>Keccak-256</span>{" "}
+              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--primary)", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>Keccak-256</span>{" "}
               and stored on Hyperledger Fabric. A{" "}
-              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--gold)", fontSize: "11px" }}>DocumentStored</span>{" "}
+              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--primary)", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>DocumentStored</span>{" "}
               event will be emitted on-chain.
             </p>
           ) : (

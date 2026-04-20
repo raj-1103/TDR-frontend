@@ -13,6 +13,7 @@ export function Card({ children, className = "", style }: { children: React.Reac
         border: "1px solid var(--border)",
         borderRadius: "var(--radius)",
         padding: "24px",
+        boxShadow: "var(--shadow-sm)",
         ...style,
       }}
     >
@@ -27,7 +28,7 @@ export function CardTitle({ icon, children }: { icon: string; children: React.Re
     <div
       style={{
         fontSize: "11px",
-        fontWeight: 500,
+        fontWeight: 600,
         color: "var(--text2)",
         textTransform: "uppercase",
         letterSpacing: "1px",
@@ -37,7 +38,7 @@ export function CardTitle({ icon, children }: { icon: string; children: React.Re
         gap: "8px",
       }}
     >
-      <span style={{ fontSize: "16px" }}>{icon}</span>
+      <span style={{ fontSize: "16px", color: "var(--primary-light)" }}>{icon}</span>
       {children}
     </div>
   );
@@ -50,11 +51,10 @@ export function FormGroup({ label, children }: { label: string; children: React.
       <label
         style={{
           display: "block",
-          fontSize: "11px",
+          fontSize: "12px",
           fontWeight: 500,
           color: "var(--text2)",
-          textTransform: "uppercase",
-          letterSpacing: "0.8px",
+          letterSpacing: "0.3px",
           marginBottom: "8px",
         }}
       >
@@ -73,22 +73,24 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       style={{
         width: "100%",
         background: "var(--bg)",
-        border: "1px solid var(--border2)",
+        border: "1px solid var(--border)",
         borderRadius: "8px",
         padding: "10px 14px",
         color: "var(--text)",
-        fontFamily: "'Sora', sans-serif",
+        fontFamily: "'Inter', sans-serif",
         fontSize: "13px",
         outline: "none",
-        transition: "border-color 0.15s",
+        transition: "border-color 0.15s, box-shadow 0.15s",
         ...props.style,
       }}
       onFocus={(e) => {
-        e.currentTarget.style.borderColor = "var(--gold)";
+        e.currentTarget.style.borderColor = "var(--primary-light)";
+        e.currentTarget.style.boxShadow = "0 0 0 3px var(--primary-dim)";
         props.onFocus?.(e);
       }}
       onBlur={(e) => {
-        e.currentTarget.style.borderColor = "var(--border2)";
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.boxShadow = "none";
         props.onBlur?.(e);
       }}
     />
@@ -103,11 +105,11 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
       style={{
         width: "100%",
         background: "var(--bg)",
-        border: "1px solid var(--border2)",
+        border: "1px solid var(--border)",
         borderRadius: "8px",
         padding: "10px 14px",
         color: "var(--text)",
-        fontFamily: "'Sora', sans-serif",
+        fontFamily: "'Inter', sans-serif",
         fontSize: "13px",
         outline: "none",
         cursor: "pointer",
@@ -126,9 +128,9 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const btnStyles: Record<BtnVariant, React.CSSProperties> = {
-  primary: { background: "var(--gold)", color: "#0d0f14", border: "none" },
-  secondary: { background: "transparent", color: "var(--text2)", border: "1px solid var(--border2)" },
-  danger: { background: "var(--red-dim)", color: "var(--red)", border: "1px solid rgba(240,106,106,0.2)" },
+  primary: { background: "var(--primary)", color: "#ffffff", border: "none", boxShadow: "0 1px 3px rgba(30,64,175,0.3)" },
+  secondary: { background: "var(--bg)", color: "var(--text2)", border: "1px solid var(--border)" },
+  danger: { background: "var(--red-dim)", color: "var(--red)", border: "1px solid rgba(220,38,38,0.15)" },
 };
 
 export function Button({ variant = "primary", loading = false, size = "md", children, style, disabled, ...rest }: BtnProps) {
@@ -141,14 +143,14 @@ export function Button({ variant = "primary", loading = false, size = "md", chil
         alignItems: "center",
         justifyContent: "center",
         gap: "8px",
-        padding: size === "sm" ? "7px 14px" : "10px 20px",
+        padding: size === "sm" ? "7px 14px" : "10px 22px",
         borderRadius: "8px",
-        fontFamily: "'Sora', sans-serif",
+        fontFamily: "'Inter', sans-serif",
         fontSize: size === "sm" ? "12px" : "13px",
-        fontWeight: 500,
+        fontWeight: 600,
         cursor: disabled || loading ? "not-allowed" : "pointer",
         opacity: disabled || loading ? 0.6 : 1,
-        transition: "all 0.15s",
+        transition: "all 0.15s ease",
         ...btnStyles[variant],
         ...style,
       }}
@@ -167,7 +169,7 @@ export function Spinner({ size = 14 }: { size?: number }) {
         display: "inline-block",
         width: size,
         height: size,
-        border: "2px solid rgba(255,255,255,0.2)",
+        border: "2px solid rgba(0,0,0,0.1)",
         borderTopColor: "currentColor",
         borderRadius: "50%",
         animation: "spin 0.6s linear infinite",
@@ -178,9 +180,9 @@ export function Spinner({ size = 14 }: { size?: number }) {
 
 /* ── Alert ── */
 const alertStyles = {
-  success: { bg: "var(--teal-dim)", border: "rgba(77,217,172,0.2)", color: "var(--teal)", icon: "✓" },
-  error: { bg: "var(--red-dim)", border: "rgba(240,106,106,0.2)", color: "var(--red)", icon: "✗" },
-  info: { bg: "var(--blue-dim)", border: "rgba(106,180,240,0.2)", color: "var(--blue)", icon: "ℹ" },
+  success: { bg: "var(--teal-dim)", border: "rgba(5,150,105,0.15)", color: "var(--teal)", icon: "✓" },
+  error: { bg: "var(--red-dim)", border: "rgba(220,38,38,0.15)", color: "var(--red)", icon: "✗" },
+  info: { bg: "var(--blue-dim)", border: "rgba(37,99,235,0.15)", color: "var(--blue)", icon: "ℹ" },
 };
 
 export function Alert({ alert }: { alert: AlertState | null }) {
@@ -213,7 +215,7 @@ export function JSONView({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        background: "var(--bg)",
+        background: "var(--bg3)",
         border: "1px solid var(--border)",
         borderRadius: "8px",
         padding: "16px",
@@ -226,7 +228,7 @@ export function JSONView({ data }: { data: Record<string, unknown> }) {
     >
       {Object.entries(data).map(([k, v]) => (
         <div key={k}>
-          <span style={{ color: "var(--gold)" }}>&quot;{k}&quot;</span>
+          <span style={{ color: "var(--primary)" }}>&quot;{k}&quot;</span>
           <span style={{ color: "var(--text3)" }}>: </span>
           <span style={{ color: "var(--text)" }}>{JSON.stringify(v)}</span>
         </div>
@@ -248,7 +250,7 @@ export function SectionHeader({
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
       <div>
-        <div style={{ fontSize: "15px", fontWeight: 500 }}>{title}</div>
+        <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--text)" }}>{title}</div>
         {sub && <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>{sub}</div>}
       </div>
       {children && <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>{children}</div>}
@@ -258,10 +260,10 @@ export function SectionHeader({
 
 /* ── Badge ── */
 const badgeMap: Record<string, { bg: string; color: string; border: string }> = {
-  UPLOADED: { bg: "var(--blue-dim)", color: "var(--blue)", border: "rgba(106,180,240,0.2)" },
-  TDR_ISSUED: { bg: "var(--gold-dim)", color: "var(--gold2)", border: "rgba(201,168,76,0.2)" },
-  TRANSFERRED: { bg: "var(--teal-dim)", color: "var(--teal)", border: "rgba(77,217,172,0.2)" },
-  ANCHORED: { bg: "rgba(100,180,100,0.1)", color: "#6dc06d", border: "rgba(109,192,109,0.2)" },
+  UPLOADED: { bg: "var(--blue-dim)", color: "var(--blue)", border: "rgba(37,99,235,0.15)" },
+  TDR_ISSUED: { bg: "var(--amber-dim)", color: "var(--amber)", border: "rgba(217,119,6,0.15)" },
+  TRANSFERRED: { bg: "var(--teal-dim)", color: "var(--teal)", border: "rgba(5,150,105,0.15)" },
+  ANCHORED: { bg: "rgba(5,150,105,0.07)", color: "#059669", border: "rgba(5,150,105,0.15)" },
 };
 
 export function Badge({ status }: { status: string }) {
@@ -274,7 +276,7 @@ export function Badge({ status }: { status: string }) {
         padding: "3px 10px",
         borderRadius: "12px",
         fontSize: "11px",
-        fontWeight: 500,
+        fontWeight: 600,
         background: s.bg,
         color: s.color,
         border: `1px solid ${s.border}`,
@@ -289,6 +291,7 @@ export function Badge({ status }: { status: string }) {
 export function TwoCol({ children }: { children: React.ReactNode }) {
   return (
     <div
+      className="two-col-grid"
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",

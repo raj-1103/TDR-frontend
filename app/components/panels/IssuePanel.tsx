@@ -68,10 +68,10 @@ export default function IssuePanel() {
           {!result ? (
             <p style={{ color: "var(--text3)", fontSize: "13px", lineHeight: 1.8 }}>
               Requires{" "}
-              <span style={{ color: "var(--red)", fontSize: "11px", fontFamily: "'DM Mono', monospace" }}>ADMIN</span>{" "}
+              <span style={{ color: "var(--red)", fontSize: "11px", fontFamily: "'DM Mono', monospace", background: "var(--red-dim)", padding: "2px 6px", borderRadius: "4px" }}>ADMIN</span>{" "}
               role. The TDR will be linked to the owner&apos;s full X.509 clientID via the identity mapping, then the
               document status will be updated to{" "}
-              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--gold)", fontSize: "11px" }}>TDR_ISSUED</span>.
+              <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--primary)", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>TDR_ISSUED</span>.
             </p>
           ) : (
             <JSONView data={result} />

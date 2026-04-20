@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AppProvider, useApp } from "@/app/context/AppContext";
-import Sidebar from "@/app/components/Sidebar";
+import Sidebar, { EXPANDED_WIDTH, COLLAPSED_WIDTH, MOBILE_BREAKPOINT } from "@/app/components/Sidebar";
 import Topbar from "@/app/components/Topbar";
 import DashboardPanel from "@/app/components/panels/DashboardPanel";
 import RegisterPanel from "@/app/components/panels/RegisterPanel";
@@ -15,7 +15,15 @@ import HistoryPanel from "@/app/components/panels/HistoryPanel";
 import GraphPanel from "@/app/components/panels/GraphPanel";
 
 function AppShell() {
-  const { panel } = useApp();
+  const { panel, sidebarOpen } = useApp();
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const panels = {
     dashboard: <DashboardPanel />,
@@ -29,12 +37,29 @@ function AppShell() {
     graph: <GraphPanel />,
   };
 
+  const marginLeft = isMobile ? 0 : sidebarOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
-      <div style={{ marginLeft: "240px", flex: 1, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          marginLeft: `${marginLeft}px`,
+          flex: 1,
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          background: "var(--bg)",
+          transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      >
         <Topbar />
-        <div style={{ padding: "32px", flex: 1 }}>
+        <div
+          style={{
+            padding: isMobile ? "20px 16px" : "32px",
+            flex: 1,
+          }}
+        >
           {panels[panel]}
         </div>
       </div>
