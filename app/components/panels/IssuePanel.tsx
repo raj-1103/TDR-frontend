@@ -28,8 +28,17 @@ export default function IssuePanel() {
         adminID, docID, tdrID, owner, area: parseInt(area) || 0,
       });
       const data = await res.json();
-      setAlert({ type: "success", message: `TDR issued! TxID: ${data.txID}` });
+      setAlert({
+  type: "success",
+  message: `TDR Issued!\n Email: ${data.emailStatus === "sent" ? "Sent" : "Pending"}\n🔗 TxID: ${data.txID}`,
+});
+      
       setResult(data);
+      setAdminID("");
+setDocID("");
+setTdrID("");
+setOwner("");
+setArea("");
     } catch (e: unknown) {
       setAlert({ type: "error", message: e instanceof Error ? e.message : "Issue failed" });
     } finally {
@@ -59,8 +68,8 @@ export default function IssuePanel() {
             <Input type="number" placeholder="250" value={area} onChange={(e) => setArea(e.target.value)} />
           </FormGroup>
           <Button loading={loading} onClick={handleSubmit}>
-            Issue TDR on Chain
-          </Button>
+  {loading ? "Issuing TDR..." : "Issue TDR on Chain"}
+</Button>
         </Card>
 
         <Card>
@@ -74,7 +83,12 @@ export default function IssuePanel() {
               <span style={{ fontFamily: "'DM Mono', monospace", color: "var(--primary)", fontSize: "11px", background: "var(--primary-dim)", padding: "2px 6px", borderRadius: "4px" }}>TDR_ISSUED</span>.
             </p>
           ) : (
-            <JSONView data={result} />
+           <div>
+  <p style={{ color: "green", fontWeight: "bold" }}>
+     TDR Successfully Issued
+  </p>
+  <JSONView data={result} />
+</div>
           )}
         </Card>
       </TwoCol>

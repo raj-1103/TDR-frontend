@@ -32,6 +32,7 @@ export default function TransferPanel() {
       }
       const ct = res.headers.get("Content-Type") || "";
       const txID = res.headers.get("X-Tx-ID") || "";
+     const emailStatus = res.headers.get("X-Email-Status");
       if (ct.includes("pdf")) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -44,8 +45,16 @@ export default function TransferPanel() {
         setResult({ txID, docID, newOwner, status: "TRANSFERRED" });
       } else {
         const data = await res.json();
-        setAlert({ type: "success", message: "Transfer complete!" });
+        setAlert({
+  type: "success",
+  message: `Transfer Complete!
+   Certificate Downloaded
+   Email: ${emailStatus === "sent" ? "Sent" : "Processing"}
+   TxID: ${txID}`,
+});
         setResult(data);
+        setDocID("");
+setNewOwner("");
       }
     } catch (e: unknown) {
       setAlert({ type: "error", message: e instanceof Error ? e.message : "Transfer failed" });
@@ -85,9 +94,14 @@ export default function TransferPanel() {
             ⚠ Transfer triggers OCR extraction, PDF regeneration with new owner details, and EVM anchoring. This may
             take 60–90 seconds. A new TDR certificate PDF will be downloaded automatically.
           </div>
+          {loading && (
+  <p style={{ fontSize: "12px", color: "var(--text2)", marginBottom: "10px" }}>
+     Processing blockchain + OCR + PDF generation...
+  </p>
+)}
           <Button loading={loading} onClick={handleSubmit}>
-            Transfer Ownership
-          </Button>
+  {loading ? "Transferring..." : "Transfer Ownership"}
+</Button>
         </Card>
 
         <Card>
@@ -98,7 +112,36 @@ export default function TransferPanel() {
               Ethereum, generate QR code, and return a signed PDF certificate.
             </p>
           ) : (
-            <JSONView data={result} />
+           <div>
+  <p style={{ color: "green", fontWeight: "bold", marginBottom: "10px" }}>
+    🎉 Transfer Successful
+  </p>
+
+  <div style={{ marginBottom: "10px" }}>
+    <span style={{
+      background: "#eef2ff",
+      color: "#3730a3",
+      padding: "4px 8px",
+      borderRadius: "6px",
+      fontSize: "12px",
+      marginRight: "8px"
+    }}>
+      📄 PDF Downloaded
+    </span>
+
+    <span style={{
+      background: "#e6fffa",
+      color: "#065f46",
+      padding: "4px 8px",
+      borderRadius: "6px",
+      fontSize: "12px"
+    }}>
+      📧 Email Sent
+    </span>
+  </div>
+
+  <JSONView data={result} />
+</div>
           )}
         </Card>
       </TwoCol>
