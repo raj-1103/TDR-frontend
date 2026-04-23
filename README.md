@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SMC e-TDR Portal — Next.js Frontend
 
-## Getting Started
+Official blockchain portal for Surat Municipal Corporation's Transfer of Development Rights system.
 
-First, run the development server:
+## Stack
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS + custom CSS variables
+- **Icons**: Lucide React
+- **Fonts**: Playfair Display + DM Sans (Google Fonts)
+- **Backend**: Go HTTP API at `localhost:8080`
+- **Blockchain**: Hyperledger Fabric via Go backend
+
+---
+
+## Setup
 
 ```bash
+# 1. Install dependencies
+npm install
+
+# 2. Set backend URL
+echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > .env.local
+
+# 3. Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pages & Routes
 
-## Learn More
+| Route | Access | Description |
+|-------|--------|-------------|
+| `/` | Public | Home — hero, services, stats |
+| `/login` | Public | Email + password login |
+| `/register` | Public | Register Fabric identity |
+| `/verify` | Public | Verify any TDR document by hash |
+| `/dashboard` | USER+ | User home, identity card |
+| `/dashboard/upload` | USER+ | Upload PDF document |
+| `/dashboard/issue` | USER+ | Request TDR issuance |
+| `/dashboard/transfer` | USER+ | Request TDR transfer |
+| `/history` | USER+ | Document blockchain audit trail |
+| `/admin` | ADMIN+ | Approve/reject issue & transfer requests |
+| `/admin/users` | SUPERADMIN | List all users, promote to admin |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Integration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+All calls go through `src/lib/api.ts`. Set `NEXT_PUBLIC_API_URL` to your Go backend.
 
-## Deploy on Vercel
+### Auth flow
+1. `POST /register` → returns `{ fabricID, email, name, role }`
+2. `POST /login` → same response
+3. Session stored in `localStorage` as `tdr_session`
+4. `fabricID` used in all subsequent API calls
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Full TDR workflow
+```
+Register → Login → Upload Doc (get docID) 
+→ Request Issue TDR (docID + tdrID + area) 
+→ Admin Approves → TDR minted on chain
+→ Request Transfer (docID + new owner fabricID)
+→ Admin Approves → PDF generated + returned
+→ Verify (docID + hash) → public check
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | Go backend URL |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Home
+│   ├── layout.tsx            # Root layout + AuthProvider
+│   ├── globals.css           # Design tokens + global styles
+│   ├── login/page.tsx
+│   ├── register/page.tsx
+│   ├── verify/page.tsx       # Public verify (supports ?docID=&hash= from QR)
+│   ├── history/page.tsx      # Document audit trail
+│   ├── dashboard/
+│   │   ├── layout.tsx        # Auth guard + sidebar
+│   │   ├── page.tsx
+│   │   ├── upload/page.tsx
+│   │   ├── issue/page.tsx
+│   │   └── transfer/page.tsx
+│   └── admin/
+│       ├── page.tsx          # Approve/reject requests
+│       └── users/page.tsx    # User management (SuperAdmin)
+├── components/
+│   ├── Navbar.tsx
+│   ├── Sidebar.tsx
+│   └── NoticeTicker.tsx
+├── hooks/
+│   └── useAuth.tsx           # Session context
+└── lib/
+    └── api.ts                # All backend API calls
+```
