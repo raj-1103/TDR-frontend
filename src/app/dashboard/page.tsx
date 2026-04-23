@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { useEffect, useState, useCallback } from 'react'
 import { getMyRequests, getMyDocuments, downloadTransferPDF, MyDocument, TransferRequest, IssueRequest } from '@/lib/api'
-import { Upload, ArrowLeftRight, CheckCircle, FileSearch, Clock, Copy, Bell, Download, FileText, RefreshCw, AlertCircle, XCircle } from 'lucide-react'
+import { Upload, ArrowLeftRight, CheckCircle, FileSearch, Clock, Copy, Bell, Download, FileText, RefreshCw, AlertCircle, XCircle, ShieldCheck, TrendingUp, FileUp, Repeat } from 'lucide-react'
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#f59e0b',
@@ -25,10 +25,11 @@ const STATUS_BADGE: Record<string, string> = {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, initializing } = useAuth()
   const [docs, setDocs] = useState<MyDocument[]>([])
   const [transfers, setTransfers] = useState<TransferRequest[]>([])
   const [issues, setIssues] = useState<IssueRequest[]>([])
+  const [adminStats, setAdminStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState<string | null>(null)
   const [downloadError, setDownloadError] = useState<string | null>(null)
@@ -44,11 +45,35 @@ export default function DashboardPage() {
       setDocs(docsRes.documents || [])
       setTransfers(reqsRes.transferRequests || [])
       setIssues(reqsRes.issueRequests || [])
-    } catch {}
+
+      if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+        const stats = await getAdminStats()
+        setAdminStats(stats)
+      }
+    } catch { }
     setLoading(false)
   }, [user])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    if (!initializing && !user) {
+      window.location.href = '/login'
+    } else if (user) {
+      load()
+    }
+  }, [user, initializing, load])
+
+  if (initializing || (!user && initializing)) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy-950)', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <RefreshCw size={24} className="animate-spin" style={{ marginBottom: 16 }} />
+          <p style={{ fontSize: 13 }}>Restoring session...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   // Notifications: recently resolved requests
   const notifications = [
@@ -89,12 +114,44 @@ export default function DashboardPage() {
 
   const copy = (text: string) => navigator.clipboard.writeText(text)
 
-  const quickLinks = [
+  // Role-based quick actions
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
+
+  const userQuickLinks = [
     { href: '/dashboard/upload', icon: Upload, title: 'Upload Document', desc: 'Add a new TDR document', color: '#3b82f6' },
     { href: '/dashboard/issue', icon: CheckCircle, title: 'Request TDR Issue', desc: 'Submit an issuance request', color: '#10b981' },
     { href: '/dashboard/transfer', icon: ArrowLeftRight, title: 'Request Transfer', desc: 'Transfer TDR to another user', color: '#f59e0b' },
     { href: '/verify', icon: FileSearch, title: 'Verify Document', desc: 'Check document authenticity', color: '#a78bfa' },
   ]
+
+  const adminQuickLinks = [
+    { href: '/admin', icon: ShieldCheck, title: 'Admin Panel', desc: 'Review pending requests', color: '#7c3aed' },
+    { href: '/dashboard/upload', icon: Upload, title: 'Upload Document', desc: 'Add a new TDR document', color: '#3b82f6' },
+    { href: '/verify', icon: FileSearch, title: 'Verify Document', desc: 'Check document authenticity', color: '#a78bfa' },
+    { href: '/admin/settings', icon: TrendingUp, title: 'Settings', desc: 'Manage account settings', color: '#06b6d4' },
+  ]
+
+  const quickLinks = isAdmin ? adminQuickLinks : userQuickLinks
+
+  // Stats
+  const totalDocs = docs.length
+  const issuedDocs = docs.filter(d => d.status === 'TDR_ISSUED').length
+  const transferredDocs = docs.filter(d => d.status === 'TRANSFERRED').length
+  const uploadedDocs = docs.filter(d => d.status === 'UPLOADED').length
+
+  const stats = isAdmin && adminStats
+    ? [
+      { label: 'System Documents', value: adminStats.totalDocuments, color: '#3b82f6', icon: FileText },
+      { label: 'Pending Globally', value: adminStats.pendingRequests, color: '#f59e0b', icon: Clock },
+      { label: 'Total TDR Issued', value: adminStats.tdrIssued, color: '#10b981', icon: CheckCircle },
+      { label: 'System Transfers', value: adminStats.transferred, color: '#a78bfa', icon: Repeat },
+    ]
+    : [
+      { label: 'Total Documents', value: totalDocs, color: '#3b82f6', icon: FileText },
+      { label: 'Awaiting Upload', value: uploadedDocs, color: '#f59e0b', icon: FileUp },
+      { label: 'TDR Issued', value: issuedDocs, color: '#10b981', icon: CheckCircle },
+      { label: 'Received via Transfer', value: transferredDocs, color: '#a78bfa', icon: Repeat },
+    ]
 
   return (
     <div>
@@ -105,16 +162,40 @@ export default function DashboardPage() {
             🏠 <Link href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Home</Link> › Dashboard
           </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700 }}>
-            Welcome back, {user?.name || 'User'} 👋
+            Welcome back, {user?.name || 'User'}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>
-            Manage your TDR documents and track blockchain transactions.
+            {isAdmin
+              ? 'Manage platform operations and review pending blockchain requests.'
+              : 'Manage your TDR documents and track blockchain transactions.'}
           </p>
         </div>
-        <button className="btn-ghost" onClick={load} disabled={loading} style={{ fontSize: 13 }}>
-          <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {isAdmin && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#34d399', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6, padding: '4px 10px' }}>
+              <ShieldCheck size={12} /> {user?.role}
+            </span>
+          )}
+          <button className="btn-ghost" onClick={load} disabled={loading} style={{ fontSize: 13 }}>
+            <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
+        {stats.map(({ label, value, color, icon: Icon }) => (
+          <div key={label} className="glass-card" style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 42, height: 42, background: `${color}15`, border: `1px solid ${color}30`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon size={18} color={color} />
+            </div>
+            <div>
+              <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-display)', color }}>{value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>{label}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Download error banner */}
@@ -279,8 +360,8 @@ export default function DashboardPage() {
                             </button>
                           </Link>
                         )}
-                        {/* Request transfer if TDR issued */}
-                        {doc.status === 'TDR_ISSUED' && (
+                        {/* Request transfer if TDR issued or received via transfer */}
+                        {(doc.status === 'TDR_ISSUED' || doc.status === 'TRANSFERRED') && (
                           <Link href={`/dashboard/transfer?docID=${doc.docID}`} style={{ textDecoration: 'none' }}>
                             <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }}>
                               <ArrowLeftRight size={11} /> Transfer

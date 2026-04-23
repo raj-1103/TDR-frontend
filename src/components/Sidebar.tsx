@@ -13,7 +13,7 @@ const navItems = [
   { href: '/verify',             label: 'Verify Document',   icon: FileSearch,      roles: ['USER','ADMIN','SUPERADMIN'] },
   { href: '/admin',              label: 'Admin Panel',       icon: ShieldCheck,     roles: ['ADMIN','SUPERADMIN'] },
   { href: '/admin/users',        label: 'Manage Admins',     icon: Users,           roles: ['SUPERADMIN'] },
-  { href: '/admin/settings',     label: 'Settings',          icon: Settings,        roles: ['ADMIN','SUPERADMIN'] },
+  { href: '/admin/settings',     label: 'Settings',          icon: Settings,        roles: ['USER','ADMIN','SUPERADMIN'] },
 ]
 
 export default function Sidebar() {

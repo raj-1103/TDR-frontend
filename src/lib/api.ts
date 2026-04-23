@@ -84,8 +84,11 @@ export const verifyOTP = (email: string, otp: string) =>
     method: 'POST', body: JSON.stringify({ email, otp })
   })
 
-export const register = (body: { email: string; name: string; org?: string }) =>
+export const register = (body: { email: string; name: string; password: string; org?: string }) =>
   req<{ message: string }>('/register', { method: 'POST', body: JSON.stringify(body) })
+
+export const userLogin = (body: { email: string; password: string }) =>
+  req<UserSession>('/user-login', { method: 'POST', body: JSON.stringify(body) })
 
 // ── Auth: Admin separate login (password-based) ────────────
 
@@ -233,3 +236,12 @@ export const changePassword = (fabricID: string, currentPassword: string, newPas
   req<{ message: string }>('/change-password', {
     method: 'POST', body: JSON.stringify({ fabricID, currentPassword, newPassword })
   })
+
+export const getAdminStats = () =>
+  req<{
+    totalDocuments: number
+    pendingRequests: number
+    tdrIssued: number
+    transferred: number
+    totalUsers: number
+  }>('/admin-stats')

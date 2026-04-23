@@ -4,17 +4,18 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { register, sendOTP, verifyOTP } from '@/lib/api'
-import { Shield, Mail, User, AlertCircle, ArrowRight, Lock, RefreshCw, CheckCircle } from 'lucide-react'
+import { Shield, Mail, User, AlertCircle, ArrowRight, Lock, RefreshCw, CheckCircle, Eye, EyeOff } from 'lucide-react'
 
 export default function RegisterPage() {
   const { setUser } = useAuth()
   const router = useRouter()
   const [step, setStep] = useState<'details' | 'otp'>('details')
-  const [form, setForm] = useState({ email: '', name: '', org: 'org1' })
+  const [form, setForm] = useState({ email: '', name: '', password: '', org: 'org1' })
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [countdown, setCountdown] = useState(0)
+  const [showPassword, setShowPassword] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
     try {
-      await register({ email: form.email, name: form.name, org: form.org })
+      await register({ email: form.email, name: form.name, password: form.password, org: form.org })
       setStep('otp')
       setCountdown(60)
       setTimeout(() => inputRefs.current[0]?.focus(), 100)
@@ -148,6 +149,29 @@ export default function RegisterPage() {
                 <div style={{ position: 'relative' }}>
                   <Mail size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                   <input type="email" className="tdr-input" style={{ paddingLeft: 36 }} placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="tdr-input"
+                    style={{ paddingLeft: 36, paddingRight: 40 }}
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={e => setForm({ ...form, password: e.target.value })}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
               </div>
 

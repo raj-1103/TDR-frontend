@@ -8,11 +8,47 @@ import Sidebar from '@/components/Sidebar'
 import { changePassword } from '@/lib/api'
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react'
 
+const PasswordField = ({
+  label, value, showKey, show, setShow, onChange
+}: {
+  label: string
+  value: string
+  showKey: 'current' | 'new' | 'confirm'
+  show: Record<string, boolean>
+  setShow: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  onChange: (v: string) => void
+}) => (
+  <div>
+    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
+      {label}
+    </label>
+    <div style={{ position: 'relative' }}>
+      <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+      <input
+        type={show[showKey] ? 'text' : 'password'}
+        className="tdr-input"
+        style={{ paddingLeft: 34, paddingRight: 40 }}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        required
+        placeholder="••••••••"
+      />
+      <button
+        type="button"
+        onClick={() => setShow(s => ({ ...s, [showKey]: !s[showKey] }))}
+        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+      >
+        {show[showKey] ? <EyeOff size={14} /> : <Eye size={14} />}
+      </button>
+    </div>
+  </div>
+)
+
 export default function AdminSettingsPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [form, setForm] = useState({ current: '', newPass: '', confirm: '' })
-  const [show, setShow] = useState({ current: false, new: false, confirm: false })
+  const [show, setShow] = useState({ current: false, new: false, confirm: false } as Record<string, boolean>)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -63,40 +99,6 @@ export default function AdminSettingsPage() {
 
   const passwordStrength = strength(form.newPass)
 
-  const PasswordField = ({
-    label, value, showKey, onChange
-  }: {
-    label: string
-    value: string
-    showKey: 'current' | 'new' | 'confirm'
-    onChange: (v: string) => void
-  }) => (
-    <div>
-      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-        {label}
-      </label>
-      <div style={{ position: 'relative' }}>
-        <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-        <input
-          type={show[showKey] ? 'text' : 'password'}
-          className="tdr-input"
-          style={{ paddingLeft: 34, paddingRight: 40 }}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          required
-          placeholder="••••••••"
-        />
-        <button
-          type="button"
-          onClick={() => setShow(s => ({ ...s, [showKey]: !s[showKey] }))}
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
-        >
-          {show[showKey] ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
-      </div>
-    </div>
-  )
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--navy-950)' }}>
       <Navbar />
@@ -107,22 +109,24 @@ export default function AdminSettingsPage() {
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                <Link href="/admin" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Admin</Link> › Settings
+                <Link href={user?.role === 'USER' ? '/dashboard' : '/admin'} style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                  {user?.role === 'USER' ? 'Dashboard' : 'Admin'}
+                </Link> › Settings
               </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Settings</h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Manage your admin account settings.</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Manage your portal account settings.</p>
             </div>
 
             {/* Account info card */}
             <div className="glass-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-                {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'A'}
+                {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 15 }}>{user?.name || 'Admin'}</div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>{user?.name || 'User'}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{user?.email}</div>
                 <div style={{ marginTop: 4 }}>
-                  <span className={`badge ${user?.role === 'SUPERADMIN' ? 'badge-approved' : 'badge-pending'}`}>
+                  <span className={`badge ${user?.role === 'SUPERADMIN' ? 'badge-approved' : user?.role === 'ADMIN' ? 'badge-approved' : 'badge-pending'}`}>
                     <ShieldCheck size={10} /> {user?.role}
                   </span>
                 </div>
@@ -133,7 +137,7 @@ export default function AdminSettingsPage() {
             <div className="glass-card" style={{ padding: 28 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Change Password</h2>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
-                Update your admin portal password. Use a strong, unique password.
+                Update your portal password. Use a strong, unique password.
               </p>
 
               {/* First-time notice */}
@@ -158,6 +162,8 @@ export default function AdminSettingsPage() {
                   label="Current Password"
                   value={form.current}
                   showKey="current"
+                  show={show}
+                  setShow={setShow}
                   onChange={v => setForm(f => ({ ...f, current: v }))}
                 />
 
@@ -165,6 +171,8 @@ export default function AdminSettingsPage() {
                   label="New Password"
                   value={form.newPass}
                   showKey="new"
+                  show={show}
+                  setShow={setShow}
                   onChange={v => setForm(f => ({ ...f, newPass: v }))}
                 />
 
@@ -185,6 +193,8 @@ export default function AdminSettingsPage() {
                   label="Confirm New Password"
                   value={form.confirm}
                   showKey="confirm"
+                  show={show}
+                  setShow={setShow}
                   onChange={v => setForm(f => ({ ...f, confirm: v }))}
                 />
 

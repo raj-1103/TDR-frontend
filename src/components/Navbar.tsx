@@ -42,10 +42,10 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <button style={{ position: 'relative', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', cursor: 'pointer' }}>
+              {/* <button style={{ position: 'relative', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', cursor: 'pointer' }}>
                 <Bell size={16} color="var(--text-secondary)" />
                 <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, background: '#ef4444', borderRadius: '50%' }} />
-              </button>
+              </button> */}
 
               <div style={{ position: 'relative' }}>
                 <button
