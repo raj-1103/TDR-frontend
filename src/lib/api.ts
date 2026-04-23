@@ -63,9 +63,15 @@ export interface VerifyResult {
 }
 
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'Bypass-Tunnel-Reminder': 'true', // Bypasses localtunnel's 511 interstitial page
+    ...((options?.headers as Record<string, string>) || {})
+  }
+
   const res = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers,
   })
   if (!res.ok) {
     const text = await res.text()
@@ -114,7 +120,11 @@ export const uploadDocument = async (fabricID: string, file: File) => {
   const form = new FormData()
   form.append('fabricID', fabricID)
   form.append('file', file)
-  const res = await fetch(`${API}/upload`, { method: 'POST', body: form })
+  const res = await fetch(`${API}/upload`, { 
+    method: 'POST', 
+    body: form,
+    headers: { 'Bypass-Tunnel-Reminder': 'true' }
+  })
   if (!res.ok) throw new Error(await res.text())
   return res.json() as Promise<{ docID: string; txID: string }>
 }
@@ -189,7 +199,10 @@ export const getPendingRequests = () =>
 export const approveTransfer = async (adminFabricID: string, requestID: string) => {
   const res = await fetch(`${API}/approve-transfer`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Bypass-Tunnel-Reminder': 'true' 
+    },
     body: JSON.stringify({ adminFabricID, requestID }),
   })
   if (!res.ok) throw new Error(await res.text())
