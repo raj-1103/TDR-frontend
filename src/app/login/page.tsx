@@ -108,10 +108,10 @@ export default function LoginPage() {
           </form>
 
           <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', marginTop: 24 }}>
-            No account? <Link href="/register" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 500 }}>Register here</Link>
+            No account? <Link href="/register" style={{ color: 'var(--navy-400)', textDecoration: 'none', fontWeight: 700 }}>Register here</Link>
           </p>
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(148,163,184,0.5)', marginTop: 12 }}>
-            Admin? <Link href="/admin-login" style={{ color: 'rgba(148,163,184,0.6)', textDecoration: 'none' }}>Admin Portal →</Link>
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', marginTop: 12 }}>
+            Admin? <Link href="/admin-login" style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>Admin Portal →</Link>
           </p>
         </div>
       </div>

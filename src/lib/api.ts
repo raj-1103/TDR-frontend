@@ -4,7 +4,7 @@ export interface UserSession {
   fabricID: string
   email: string
   name: string
-  role: 'USER' | 'ADMIN' | 'SUPERADMIN'
+  role: 'USER' | 'ADMIN' | 'SUPERADMIN' | 'JUNIOR' | 'ASSISTANT' | 'TDO' | 'CITY' | 'COMMISSIONER'
 }
 
 export interface TransferRequest {
@@ -18,6 +18,8 @@ export interface TransferRequest {
   createdAt: string
   resolvedAt?: string
   reason?: string
+  approvals?: number
+  totalRequired?: number
 }
 
 export interface IssueRequest {
@@ -31,6 +33,8 @@ export interface IssueRequest {
   createdAt: string
   resolvedAt?: string
   reason?: string
+  approvals?: number
+  totalRequired?: number
 }
 
 export interface MyDocument {
@@ -62,10 +66,108 @@ export interface VerifyResult {
   reason: string
 }
 
+export interface PendingAction {
+  id: string
+  type: 'ISSUE_TDR' | 'TRANSFER_TDR' | 'ACCEPT_BID'
+  requester: string
+  createdAt: string
+  status: string
+  details: {
+    docID?: string
+    tdrID?: string
+    fromOwner?: string
+    toOwner?: string
+    price?: number
+    amount?: number
+  }
+  approvals: number
+  totalRequired: number
+}
+
+export interface MarketplaceListing {
+  id:          string
+  listingID:   string
+  tdrID:       string
+  docID:       string
+  area:        number
+  askingPrice: number
+  seller:      string
+  sellerID:    string
+  description: string
+  status:      'ACTIVE' | 'SOLD' | 'CANCELLED'
+}
+
+export interface Bid {
+  id: string
+  listingID: string
+  bidder: string
+  amount: number
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CONFIRMED'
+}
+
+export interface BidDetail {
+  bidID: string
+  listingID: string
+  tdrID: string
+  bidderID: string
+  amount: number
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN'
+  placedAt: string
+  message: string
+  actionID?: string
+}
+
+export const getBidsForListing = (listingID: string) =>
+  req<{ bids: BidDetail[] }>(`/marketplace/bids?listingID=${encodeURIComponent(listingID)}`)
+
+export const getMyListings = (fabricID: string) =>
+  req<{ listings: any[] }>(`/marketplace/my-listings?fabricID=${encodeURIComponent(fabricID)}`)
+    .then(res => ({
+      listings: (res.listings || []).map((l: any) => ({
+        id:          l.listingID || '',   // ← normalize
+        listingID:   l.listingID || '',
+        tdrID:       l.tdrID     || '',
+        docID:       l.docID     || '',
+        area:        l.area      ?? 0,
+        askingPrice: l.askingPrice ?? 0,
+        seller:      l.sellerID  || '',
+        sellerID:    l.sellerID  || '',
+        description: l.description || '',
+        status:      l.status    || 'ACTIVE',
+      }))
+    }))
+
+export const withdrawBid = (fabricID: string, bidID: string) =>
+  req<{ bidID: string; txID: string; status: string }>('/marketplace/withdraw-bid', {
+    method: 'POST', body: JSON.stringify({ fabricID, bidID })
+  })
+
+export const cancelListing = (fabricID: string, listingID: string) =>
+  req<{ listingID: string; txID: string; status: string }>('/marketplace/cancel-listing', {
+    method: 'POST', body: JSON.stringify({ fabricID, listingID })
+  })
+
+export const getMyBids = (fabricID: string) =>
+  req<{ bids: BidDetail[] }>(`/marketplace/my-bids?fabricID=${encodeURIComponent(fabricID)}`)
+
+export const getHighestBid = (fabricID: string, listingID: string) =>
+  req<BidDetail>(`/marketplace/highest-bid?fabricID=${encodeURIComponent(fabricID)}&listingID=${encodeURIComponent(listingID)}`)
+
+export const getListingDetail = (fabricID: string, listingID: string) =>
+  req<any>(`/marketplace/listing?fabricID=${encodeURIComponent(fabricID)}&listingID=${encodeURIComponent(listingID)}`)
+
+export const getBidDetail = (fabricID: string, bidID: string) =>
+  req<BidDetail>(`/marketplace/bid-detail?fabricID=${encodeURIComponent(fabricID)}&bidID=${encodeURIComponent(bidID)}`)
+
+export const confirmBid = (fabricID: string, actionID: string) =>
+  req<{ actionID: string; txID: string; status: string }>('/marketplace/confirm-bid', {
+    method: 'POST', body: JSON.stringify({ fabricID, actionID })
+  })
+
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'Bypass-Tunnel-Reminder': 'true', // Bypasses localtunnel's 511 interstitial page
+    ...(API.includes('loca.lt') ? { 'Bypass-Tunnel-Reminder': 'true' } : {}), // Bypasses localtunnel's 511 interstitial page only if using tunnel
     ...((options?.headers as Record<string, string>) || {})
   }
 
@@ -123,14 +225,14 @@ export const uploadDocument = async (fabricID: string, file: File) => {
   const res = await fetch(`${API}/upload`, { 
     method: 'POST', 
     body: form,
-    headers: { 'Bypass-Tunnel-Reminder': 'true' }
+    headers: API.includes('loca.lt') ? { 'Bypass-Tunnel-Reminder': 'true' } : undefined
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json() as Promise<{ docID: string; txID: string }>
 }
 
-export const verifyDocument = (docID: string, hash: string) =>
-  req<VerifyResult>(`/verify?docID=${docID}&hash=${hash}`)
+export const verifyDocument = (docID: string) =>
+  req<VerifyResult>(`/verify?docID=${docID}`)
 
 export const getHistory = (docID: string) =>
   req<{ docID: string; history: HistoryEntry[] }>(`/history?docID=${docID}`)
@@ -201,7 +303,7 @@ export const approveTransfer = async (adminFabricID: string, requestID: string) 
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
-      'Bypass-Tunnel-Reminder': 'true' 
+      ...(API.includes('loca.lt') ? { 'Bypass-Tunnel-Reminder': 'true' } : {})
     },
     body: JSON.stringify({ adminFabricID, requestID }),
   })
@@ -250,6 +352,62 @@ export const changePassword = (fabricID: string, currentPassword: string, newPas
     method: 'POST', body: JSON.stringify({ fabricID, currentPassword, newPassword })
   })
 
+// ── Marketplace ──────────────────────────────────────────
+
+export const getMarketplaceListings = () =>
+  req<{ listings: any[] }>('/marketplace/listings').then(res => ({
+    listings: (res.listings || []).map((l: any) => ({
+      id:          l.listingID || l.id || '',
+      listingID:   l.listingID || l.id || '',
+      tdrID:       l.tdrID    || l.tdrId  || '',
+      docID:       l.docID    || l.docId  || '',
+      area:        l.area     ?? 0,
+      askingPrice: l.askingPrice ?? 0,
+      seller:      l.sellerID   || l.seller || '',
+      sellerID:    l.sellerID   || '',
+      description: l.description || '',
+      status:      l.status || 'ACTIVE',
+    }))
+  }))
+
+export const placeBid = (fabricID: string, listingID: string, amount: number, message = '') =>
+  req<{ bidID: string }>('/marketplace/bid', {
+    method: 'POST', body: JSON.stringify({ fabricID, listingID, amount, message })
+  })
+
+export const listForSale = (fabricID: string, tdrID: string, askingPrice: number, description = '') =>
+  req<{ listingID: string }>('/marketplace/list', {
+    method: 'POST', body: JSON.stringify({ fabricID, tdrID, askingPrice, description })
+  })
+
+export const acceptBid = (fabricID: string, bidID: string) =>
+  req<{ message: string }>('/marketplace/accept-bid', {
+    method: 'POST', body: JSON.stringify({ fabricID, bidID })
+  })
+
+// ── Universal Approval Queue ──────────────────────────────
+
+export const getPendingActions = (role?: string, fabricID?: string) => {
+  const params = new URLSearchParams()
+  if (role) params.append('role', role)
+  if (fabricID) params.append('fabricID', fabricID)
+  const qs = params.toString()
+  return req<{ actions: PendingAction[] }>(`/pending-actions${qs ? `?${qs}` : ''}`)
+}
+
+export const getNotifications = (fabricID: string) =>
+  req<{ notifications: any[] }>(`/notifications?fabricID=${fabricID}`)
+
+export const approveAction = (adminFabricID: string, actionID: string, comment: string) =>
+  req<{ message: string }>('/approve-action', {
+    method: 'POST', body: JSON.stringify({ adminFabricID, actionID, comment })
+  })
+
+export const rejectAction = (adminFabricID: string, actionID: string, reason: string) =>
+  req<{ message: string }>('/reject-action', {
+    method: 'POST', body: JSON.stringify({ adminFabricID, actionID, reason })
+  })
+
 export const getAdminStats = () =>
   req<{
     totalDocuments: number
@@ -258,3 +416,48 @@ export const getAdminStats = () =>
     transferred: number
     totalUsers: number
   }>('/admin-stats')
+
+export const directAssignRole = (superAdminFabricID: string, targetEmail: string, newRole: string) =>
+  req<{ message: string, txID: string }>('/direct-assign-role', {
+    method: 'POST', body: JSON.stringify({ superAdminFabricID, targetEmail, newRole })
+  })
+
+export const retireIdentity = (superAdminFabricID: string, targetEmail: string) =>
+  req<{ message: string, txID: string }>('/retire-identity', {
+    method: 'POST', body: JSON.stringify({ superAdminFabricID, targetEmail })
+  })
+
+// ── TDR Ownership & History ───────────────────────────────
+
+export interface TDRRecord {
+  tdrID:        string
+  owner:        string
+  fabricID:     string
+  area:         number
+  status:       string
+  acquiredAt:   string
+  acquiredFrom: string
+  listingID:    string
+  askingPrice:  number
+}
+
+export interface TransferHistoryEntry {
+  tdrID:       string
+  action:      string
+  fromOwner:   string
+  toOwner:     string
+  timestamp:   string
+  txID:        string
+  listingID:   string
+  askingPrice: number
+  soldAmount:  number
+  buyerName:   string
+  sellerName:  string
+  direction:   'SENT' | 'RECEIVED'
+}
+
+export const getMyTDRs = (fabricID: string) =>
+  req<{ tdrs: TDRRecord[] }>(`/my-tdrs?fabricID=${encodeURIComponent(fabricID)}`)
+
+export const getMyTransferHistory = (fabricID: string) =>
+  req<{ history: TransferHistoryEntry[] }>(`/my-transfer-history?fabricID=${encodeURIComponent(fabricID)}`)

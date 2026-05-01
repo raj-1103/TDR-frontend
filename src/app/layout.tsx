@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'SMC e-TDR Portal | Surat Municipal Corporation',
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           {children}
+          <Toaster richColors position="bottom-right" />
         </AuthProvider>
       </body>
     </html>

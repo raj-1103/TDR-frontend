@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { requestIssueTDR } from '@/lib/api'
 import { CheckCircle, AlertCircle, Copy, Info } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function IssuePage() {
   const { user } = useAuth()
@@ -31,7 +32,10 @@ export default function IssuePage() {
     }
   }
 
-  const copy = (text: string) => navigator.clipboard.writeText(text)
+  const copy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard')
+  }
 
   return (
     <div style={{ maxWidth: 560 }}>
@@ -53,7 +57,7 @@ export default function IssuePage() {
           </div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Request Submitted!</h2>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
-            Your TDR issuance request is now on the blockchain and awaiting admin approval.
+            Your TDR issuance request is now on the blockchain and awaiting multi-step approval from the authorities (JUNIOR, ASSISTANT, TDO, CITY, COMMISSIONER).
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -64,10 +68,10 @@ export default function IssuePage() {
             { label: 'Request ID', value: result.requestID },
             { label: 'Transaction ID', value: result.txID },
           ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+            <div key={label} style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#60a5fa', wordBreak: 'break-all' }}>{value}</code>
+                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)', wordBreak: 'break-all' }}>{value}</code>
                 <button onClick={() => copy(value)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>
                   <Copy size={13} />
                 </button>
@@ -86,10 +90,10 @@ export default function IssuePage() {
       ) : (
         <div className="glass-card" style={{ padding: 32 }}>
           {/* Info box */}
-          <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, padding: '12px 14px', fontSize: 12, color: '#93c5fd', marginBottom: 22, display: 'flex', gap: 10, lineHeight: 1.6 }}>
+          <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '12px 14px', fontSize: 12, color: 'var(--navy-accent)', marginBottom: 22, display: 'flex', gap: 10, lineHeight: 1.6 }}>
             <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>
-              Make sure you have already uploaded the document and noted its <strong>Document ID</strong>. The TDR ID must be unique — choose a meaningful identifier like <code style={{ fontFamily: 'var(--font-mono)' }}>TDRID-2026-001</code>.
+              Make sure you have already uploaded the document and noted its <strong>Document ID</strong>. The TDR ID must be unique — choose a meaningful identifier like <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>TDRID-2026-001</code>.
             </span>
           </div>
 

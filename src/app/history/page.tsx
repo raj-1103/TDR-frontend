@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import Navbar from '@/components/Navbar'
-import Sidebar from '@/components/Sidebar'
+
 import { getHistory, getMutationGraph } from '@/lib/api'
 import { Search, Clock, ArrowRight, Copy, ExternalLink, GitBranch } from 'lucide-react'
+import { toast } from 'sonner'
 
 const ACTION_COLORS: Record<string, string> = {
   UPLOADED: '#3b82f6',
@@ -38,14 +38,14 @@ export default function HistoryPage() {
     }
   }
 
-  const copy = (text: string) => navigator.clipboard.writeText(text)
+  const copy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Transaction ID copied')
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy-950)' }}>
-      <Navbar />
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main style={{ flex: 1, padding: '32px', minHeight: 'calc(100vh - 100px)' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <main>
           <div style={{ marginBottom: 24 }}>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Document History</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View the full blockchain audit trail for any TDR document.</p>
@@ -77,12 +77,25 @@ export default function HistoryPage() {
 
           {history !== null && (
             <>
-              {/* Ownership chain */}
+              {/* Ownership chain graph */}
               {chain && (
-                <div className="glass-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <GitBranch size={15} color="#a78bfa" />
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ownership Chain</span>
-                  <span style={{ fontSize: 13, color: '#c4b5fd', fontFamily: 'var(--font-mono)' }}>{chain}</span>
+                <div className="glass-card" style={{ padding: '20px 24px', marginBottom: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    <GitBranch size={16} color="#a78bfa" />
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mutation Chain Graph</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'thin' }}>
+                    {chain.split(' → ').map((node, idx, arr) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                        <div style={{ background: 'rgba(37, 99, 235, 0.05)', border: '1px solid rgba(37, 99, 235, 0.2)', borderRadius: 20, padding: '8px 16px', color: 'var(--navy-400)', fontSize: 13, fontWeight: 600 }}>
+                          {node}
+                        </div>
+                        {idx < arr.length - 1 && (
+                          <ArrowRight size={16} color="var(--text-secondary)" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -94,7 +107,7 @@ export default function HistoryPage() {
                 <div className="glass-card" style={{ padding: '24px' }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Clock size={14} />
-                    {history.length} event{history.length !== 1 ? 's' : ''} for <code style={{ fontFamily: 'var(--font-mono)', color: '#60a5fa', fontSize: 12 }}>{docID}</code>
+                    {history.length} event{history.length !== 1 ? 's' : ''} for <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--navy-accent)', fontSize: 12 }}>{docID}</code>
                   </div>
 
                   {/* Timeline */}
@@ -126,20 +139,31 @@ export default function HistoryPage() {
                               </div>
 
                               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                                {entry.fromOwner && entry.toOwner && (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px' }}>
-                                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>{entry.fromOwner?.slice(0, 14)}…</code>
-                                    <ArrowRight size={11} color="var(--text-secondary)" />
-                                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#60a5fa' }}>{entry.toOwner?.slice(0, 14)}…</code>
-                                  </div>
-                                )}
+                                  {entry.fromOwner && entry.toOwner ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px' }}>
+                                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
+                                        {entry.fromOwner.includes('@') ? entry.fromOwner.slice(0, 24) : entry.fromOwner.slice(0, 14)}…
+                                      </code>
+                                      <ArrowRight size={11} color="var(--text-secondary)" />
+                                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--navy-400)' }}>
+                                        {entry.toOwner.includes('@') ? entry.toOwner.slice(0, 24) : entry.toOwner.slice(0, 14)}…
+                                      </code>
+                                    </div>
+                                  ) : entry.actor ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px' }}>
+                                      <span style={{ color: 'var(--text-secondary)' }}>By</span>
+                                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--navy-400)' }}>
+                                        {entry.actor.includes('@') ? entry.actor.slice(0, 24) : entry.actor.slice(0, 14)}…
+                                      </code>
+                                    </div>
+                                  ) : null}
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Tx:</span>
-                                <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#60a5fa' }}>
-                                  {entry.txID?.slice(0, 30)}…
-                                </code>
+                                  <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>
+                                    {entry.txID?.slice(0, 30)}…
+                                  </code>
                                 <button onClick={() => copy(entry.txID)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                                   <Copy size={11} />
                                 </button>
@@ -155,7 +179,6 @@ export default function HistoryPage() {
             </>
           )}
         </main>
-      </div>
     </div>
   )
 }

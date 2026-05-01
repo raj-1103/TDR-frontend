@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { requestTransfer, lookupFabricID } from '@/lib/api'
 import { ArrowLeftRight, AlertCircle, CheckCircle, Copy, Info, Mail, Search } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function TransferPage() {
   const { user } = useAuth()
@@ -17,7 +18,10 @@ export default function TransferPage() {
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
 
-  const copy = (text: string) => navigator.clipboard.writeText(text)
+  const copy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard')
+  }
 
   // Live lookup when email field blurs
   const handleEmailBlur = async () => {
@@ -92,7 +96,7 @@ export default function TransferPage() {
           </div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Transfer Requested!</h2>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
-            Your transfer request is on the blockchain and awaiting admin approval. Once approved, a new certificate PDF will be generated.
+            Your transfer request is on the blockchain and awaiting multi-step authority approval. You can track the 5-signature progress on your dashboard.
           </p>
 
           <span className="badge badge-pending" style={{ marginBottom: 16, display: 'inline-flex' }}>PENDING APPROVAL</span>
@@ -101,10 +105,10 @@ export default function TransferPage() {
             { label: 'Request ID', value: result.requestID },
             { label: 'Transaction ID', value: result.txID },
           ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+            <div key={label} style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#60a5fa', wordBreak: 'break-all' }}>{value}</code>
+                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)', wordBreak: 'break-all' }}>{value}</code>
                 <button onClick={() => copy(value)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>
                   <Copy size={13} />
                 </button>
@@ -125,7 +129,7 @@ export default function TransferPage() {
         </div>
       ) : (
         <div className="glass-card" style={{ padding: 32 }}>
-          <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, padding: '12px 14px', fontSize: 12, color: '#93c5fd', marginBottom: 22, display: 'flex', gap: 10, lineHeight: 1.6 }}>
+          <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '12px 14px', fontSize: 12, color: 'var(--navy-accent)', marginBottom: 22, display: 'flex', gap: 10, lineHeight: 1.6 }}>
             <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>
               Enter the <strong>email address</strong> of the recipient. They must already be registered on the portal. Their identity will be verified automatically.
@@ -174,20 +178,20 @@ export default function TransferPage() {
                 />
                 {looking && (
                   <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
-                    <div style={{ width: 14, height: 14, border: '2px solid rgba(96,165,250,0.3)', borderTop: '2px solid #60a5fa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                    <div style={{ width: 14, height: 14, border: '2px solid rgba(37,99,235,0.2)', borderTop: '2px solid var(--navy-400)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                   </div>
                 )}
               </div>
 
               {/* Lookup result */}
               {resolvedFabricID && (
-                <div style={{ marginTop: 8, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <CheckCircle size={14} color="#34d399" />
+                <div style={{ marginTop: 8, background: 'rgba(5,150,105,0.03)', border: '1px solid rgba(5,150,105,0.15)', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <CheckCircle size={14} color="var(--emerald)" />
                   <div>
-                    <div style={{ fontSize: 12, color: '#34d399', fontWeight: 600 }}>
+                    <div style={{ fontSize: 12, color: 'var(--emerald)', fontWeight: 700 }}>
                       {resolvedName} — user verified
                     </div>
-                    <code style={{ fontSize: 10, color: 'rgba(52,211,153,0.7)', fontFamily: 'var(--font-mono)' }}>
+                    <code style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                       {resolvedFabricID}
                     </code>
                   </div>

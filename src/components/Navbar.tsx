@@ -2,69 +2,131 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import { Shield, Bell, Search, ChevronDown, LogOut, User, Settings, Menu, X } from 'lucide-react'
+import { Shield, Search, ChevronDown, LogOut, User, Settings, Menu, X, RefreshCw } from 'lucide-react'
+import NotificationBell from '@/components/NotificationBell'
 
-export default function Navbar() {
+export default function Navbar({ sidebarOpen, onToggleSidebar }: { sidebarOpen?: boolean, onToggleSidebar?: () => void }) {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const searchablePages = [
+    { name: 'Dashboard', path: '/dashboard', icon: User, roles: ['OFFICER', 'ADMIN', 'SUPERADMIN'], keywords: ['home', 'overview', 'stats'] },
+    { name: 'Upload Document', path: '/dashboard/upload', icon: Shield, roles: ['OFFICER', 'ADMIN', 'SUPERADMIN'], keywords: ['add', 'new', 'tdr', 'issue', 'request'] },
+    { name: 'Request Transfer', path: '/dashboard', icon: RefreshCw, roles: ['OFFICER', 'ADMIN', 'SUPERADMIN'], keywords: ['transfer', 'send', 'move', 'change owner'] },
+    { name: 'Verify Authenticity', path: '/verify', icon: Shield, roles: ['OFFICER', 'ADMIN', 'SUPERADMIN', 'GUEST'], keywords: ['check', 'audit', 'valid'] },
+    { name: 'Document History', path: '/history', icon: Search, roles: ['OFFICER', 'ADMIN', 'SUPERADMIN'], keywords: ['logs', 'timeline', 'events', 'audit trail'] },
+    { name: 'Admin Panel', path: '/admin', icon: Settings, roles: ['ADMIN', 'SUPERADMIN'], keywords: ['manage', 'approvals', 'requests'] },
+    { name: 'User Management', path: '/admin/users', icon: User, roles: ['ADMIN', 'SUPERADMIN'], keywords: ['officers', 'staff', 'accounts'] },
+    { name: 'Portal Settings', path: '/admin/settings', icon: Settings, roles: ['ADMIN', 'SUPERADMIN'], keywords: ['password', 'profile', 'config'] },
+  ]
+
+  const filteredResults = searchQuery.trim() === '' 
+    ? [] 
+    : searchablePages.filter(page => 
+        (page.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+         page.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))) &&
+        (!user || page.roles.includes(user.role))
+      )
+
+
 
   return (
-    <header style={{ borderBottom: '1px solid var(--border)', background: 'rgba(8,21,37,0.95)', backdropFilter: 'blur(16px)' }} className="sticky top-0 z-50">
+    <header className="sticky top-0 z-50 bg-[#11233d] border-b border-white/5" style={{ backgroundColor: '#11233d' }}>
       {/* Top strip */}
-      <div style={{ background: 'var(--navy-900)', borderBottom: '1px solid var(--border)', padding: '6px 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+      <div style={{ background: '#11233d', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '8px 0', fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <span>🛡️ <strong style={{ color: 'var(--text-primary)' }}>Official Portal</strong> of Surat Municipal Corporation — Government of Gujarat</span>
-          <Link href="/verify" style={{ color: '#60a5fa', textDecoration: 'underline', fontSize: 12 }}>Verify Authenticity</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Shield size={14} color="#10b981" />
+            <span><strong style={{ color: '#ffffff' }}>Official Portal</strong> of Surat Municipal Corporation — Government of Gujarat</span>
+          </div>
+          <Link href="/verify" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>Verify Authenticity</Link>
         </div>
       </div>
 
       {/* Main nav */}
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between" style={{ height: 64 }}>
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,#1d4ed8,#0891b2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Shield size={20} color="white" />
-          </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.2 }}>Surat Municipal Corporation</div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>e-TDR Blockchain Portal</div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {onToggleSidebar && !sidebarOpen && (
+            <button 
+              onClick={onToggleSidebar}
+              style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          {/* Logo */}
+        <Link href="/" className="flex items-center">
+          <img src="/smc-logo-white.png" alt="SMC e-TDR Portal" style={{ height: 64, objectFit: 'contain' }} />
         </Link>
+        </div>
 
         {/* Search */}
-        <div className="hidden md:flex items-center" style={{ background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', gap: 8, width: 260 }}>
-          <Search size={14} color="var(--text-secondary)" />
-          <input placeholder="Search pages, services..." style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: 13, width: '100%' }} />
+        <div className="hidden md:flex items-center" style={{ position: 'relative' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 16px', gap: 10, width: 320, display: 'flex', alignItems: 'center' }}>
+            <Search size={16} color="rgba(255,255,255,0.5)" />
+            <input 
+              placeholder="Search pages, services..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'transparent', border: 'none', outline: 'none', color: '#ffffff', fontSize: 14, width: '100%' }} 
+            />
+          </div>
+
+          {searchQuery.trim() !== '' && filteredResults.length === 0 && (
+            <div style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: '#ffffff', border: '1px solid var(--border)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', borderRadius: 10, padding: '12px 16px', color: 'var(--text-secondary)', fontSize: 13, zIndex: 1000 }}>
+              No results found for "{searchQuery}"
+            </div>
+          )}
+
+          {filteredResults.length > 0 && (
+
+            <div style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: '#ffffff', border: '1px solid var(--border)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', borderRadius: 10, overflow: 'hidden', zIndex: 1000 }}>
+              {filteredResults.map((page, idx) => (
+                <Link 
+                  key={idx} 
+                  href={page.path}
+                  onClick={() => setSearchQuery('')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', color: 'var(--text-primary)', textDecoration: 'none', fontSize: 13, borderBottom: idx === filteredResults.length - 1 ? 'none' : '1px solid var(--border)', transition: 'background 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <page.icon size={14} color="var(--text-secondary)" />
+                  {page.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
+
 
         {/* Right side */}
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              {/* <button style={{ position: 'relative', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', cursor: 'pointer' }}>
-                <Bell size={16} color="var(--text-secondary)" />
-                <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, background: '#ef4444', borderRadius: '50%' }} />
-              </button> */}
-
+              <NotificationBell />
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => setUserOpen(!userOpen)}
-                  className="flex items-center gap-2"
-                  style={{ background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: 'var(--text-primary)' }}
+                  className="flex items-center gap-3"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
                 >
-                  <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
-                    {user.name?.[0]?.toUpperCase() || 'U'}
+                  <div style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <User size={20} />
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>{user.name || user.email}</span>
-                  <ChevronDown size={13} color="var(--text-secondary)" />
+                  <div style={{ textAlign: 'left', display: 'none', md: 'block' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', lineHeight: 1 }}>{user.name || 'Guest User'}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 4, fontWeight: 500 }}>Portal Access</div>
+                  </div>
+                  <ChevronDown size={14} color="rgba(255,255,255,0.4)" />
                 </button>
 
                 {userOpen && (
-                  <div style={{ position: 'absolute', right: 0, top: '110%', background: 'var(--navy-800)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, minWidth: 200, zIndex: 100 }}>
+                  <div style={{ position: 'absolute', right: 0, top: '110%', background: '#ffffff', border: '1px solid var(--border)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', borderRadius: 10, padding: 8, minWidth: 200, zIndex: 100 }}>
                     <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
                       <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{user.email}</div>
-                      <div style={{ fontSize: 11, marginTop: 2 }}><span className="badge badge-approved">{user.role}</span></div>
+                      <div style={{ fontSize: 11, marginTop: 4 }}><span className="badge badge-approved">{user.role}</span></div>
                     </div>
                     <Link href="/dashboard" onClick={() => setUserOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, color: 'var(--text-primary)', borderRadius: 6, cursor: 'pointer', textDecoration: 'none' }}>
                       <User size={14} /> Dashboard
@@ -83,8 +145,10 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }}>Sign In</Link>
-              <Link href="/register" className="btn-primary" style={{ padding: '8px 16px', fontSize: 13 }}>+ Register User</Link>
+              <Link href="/login" className="btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.2)', fontSize: 14, fontWeight: 700, color: '#ffffff' }}>Sign In</Link>
+              <Link href="/register" className="btn-primary" style={{ padding: '12px 24px', fontSize: 14, fontWeight: 700, borderRadius: 10, gap: 10, background: '#1e40af', border: '1px solid #3b82f6' }}>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> Register User
+              </Link>
             </>
           )}
 
@@ -96,7 +160,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div style={{ borderTop: '1px solid var(--border)', background: 'var(--navy-900)', padding: '16px' }} className="md:hidden flex flex-col gap-2">
+        <div style={{ borderTop: '1px solid var(--border)', background: '#ffffff', padding: '16px' }} className="md:hidden flex flex-col gap-2">
           <Link href="/" className="btn-ghost" style={{ justifyContent: 'flex-start' }}>Home</Link>
           <Link href="/dashboard" className="btn-ghost" style={{ justifyContent: 'flex-start' }}>Dashboard</Link>
           <Link href="/verify" className="btn-ghost" style={{ justifyContent: 'flex-start' }}>Verify</Link>

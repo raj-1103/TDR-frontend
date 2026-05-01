@@ -3,17 +3,14 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import Navbar from '@/components/Navbar'
-import Sidebar from '@/components/Sidebar'
+
 import {
-  getPendingRequests,
-  getPendingIssueRequests,
-  approveTransfer,
-  rejectTransfer,
-  approveIssueTDR,
-  rejectIssueTDR,
+  getPendingActions,
+  approveAction,
+  rejectAction,
 } from '@/lib/api'
 import { CheckCircle, XCircle, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function AdminPage() {
   const { user } = useAuth()
@@ -22,27 +19,40 @@ export default function AdminPage() {
   const [issues, setIssues] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
-    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') { router.push('/dashboard'); return }
+    const authorityRoles = ['ADMIN', 'SUPERADMIN', 'JUNIOR', 'ASSISTANT', 'TDO', 'CITY', 'COMMISSIONER']
+    if (!authorityRoles.includes(user.role)) { router.push('/dashboard'); return }
     load()
   }, [user])
 
-  const showToast = (msg: string, ok: boolean) => {
-    setToast({ msg, ok })
-    setTimeout(() => setToast(null), 3500)
-  }
+
 
   const load = async () => {
     setLoading(true)
     try {
-      const [t, i] = await Promise.all([getPendingRequests(), getPendingIssueRequests()])
-      setTransfers(t.requests || [])
-      setIssues(i.requests || [])
+      const res = await getPendingActions(user?.role, user?.fabricID)
+      const raw = res.actions || res.Actions || []
+      const all = raw.map((a: any) => ({
+        id: a.actionId || a.ActionID || a.id || a.ID || '',
+        type: a.actionType || a.ActionType || a.type || a.Type || '',
+        requester: a.requestedBy || a.RequestedBy || a.requester || a.Requester || '',
+        createdAt: a.requestedAt || a.RequestedAt || a.createdAt || a.CreatedAt || '',
+        status: a.status || a.Status || '',
+        details: a.payload || a.Payload || a.details || a.Details || {},
+        approvals: a.approvals ?? 0,
+        totalRequired: a.totalRequired ?? a.TotalRequired ?? 5,
+      }))
+
+      // Since the backend now correctly filters by role/level, 
+      // we can trust the results and skip the redundant frontend filter.
+      setIssues(all.filter(a => a.type === 'ISSUE_TDR'))
+      setTransfers(all.filter(a => a.type === 'TRANSFER_TDR'))
+      
+      console.log(`[DEBUG] Loaded ${all.length} actions for role ${user?.role}`)
     } catch (e: any) {
-      showToast(e.message, false)
+      toast.error(e.message)
     }
     setLoading(false)
   }
@@ -50,10 +60,10 @@ export default function AdminPage() {
   const handleApproveIssue = async (requestID: string) => {
     setActing(requestID)
     try {
-      await approveIssueTDR(user!.fabricID, requestID)
-      showToast('TDR issue approved!', true)
+      await approveAction(user!.fabricID, requestID, 'Approved via Admin Panel')
+      toast.success('TDR issue approved!')
       await load()
-    } catch (e: any) { showToast(e.message, false) }
+    } catch (e: any) { toast.error(e.message) }
     setActing(null)
   }
 
@@ -62,20 +72,20 @@ export default function AdminPage() {
     if (reason === null) return
     setActing(requestID)
     try {
-      await rejectIssueTDR(user!.fabricID, requestID, reason || 'Rejected by admin')
-      showToast('Request rejected.', true)
+      await rejectAction(user!.fabricID, requestID, reason || 'Rejected by admin')
+      toast.success('Request rejected.')
       await load()
-    } catch (e: any) { showToast(e.message, false) }
+    } catch (e: any) { toast.error(e.message) }
     setActing(null)
   }
 
   const handleApproveTransfer = async (requestID: string) => {
     setActing(requestID)
     try {
-      await approveTransfer(user!.fabricID, requestID)
-      showToast('Transfer approved! PDF generated if applicable.', true)
+      await approveAction(user!.fabricID, requestID, 'Approved via Admin Panel')
+      toast.success('Transfer approved!')
       await load()
-    } catch (e: any) { showToast(e.message, false) }
+    } catch (e: any) { toast.error(e.message) }
     setActing(null)
   }
 
@@ -84,35 +94,17 @@ export default function AdminPage() {
     if (reason === null) return
     setActing(requestID)
     try {
-      await rejectTransfer(user!.fabricID, requestID, reason || 'Rejected by admin')
-      showToast('Transfer rejected.', true)
+      await rejectAction(user!.fabricID, requestID, reason || 'Rejected by admin')
+      toast.success('Transfer rejected.')
       await load()
-    } catch (e: any) { showToast(e.message, false) }
+    } catch (e: any) { toast.error(e.message) }
     setActing(null)
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy-950)' }}>
-      <Navbar />
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main style={{ flex: 1, padding: '32px', minHeight: 'calc(100vh - 100px)' }}>
-          {/* Toast */}
-          {toast && (
-            <div style={{
-              position: 'fixed', top: 80, right: 24, zIndex: 200,
-              background: toast.ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-              border: `1px solid ${toast.ok ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
-              borderRadius: 10, padding: '12px 18px', fontSize: 13,
-              color: toast.ok ? '#34d399' : '#f87171',
-              display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380,
-              backdropFilter: 'blur(8px)',
-              animation: 'fadeIn 0.2s ease',
-            }}>
-              {toast.ok ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
-              {toast.msg}
-            </div>
-          )}
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <main>
+
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
@@ -126,7 +118,7 @@ export default function AdminPage() {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#34d399' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--emerald)', fontWeight: 600 }}>
                 <ShieldCheck size={14} /> {user?.role}
               </div>
               <button className="btn-ghost" onClick={load} disabled={loading}>
@@ -180,7 +172,7 @@ export default function AdminPage() {
                           <th>Request ID</th>
                           <th>Doc ID</th>
                           <th>TDR ID</th>
-                          <th>Owner</th>
+                          <th>Status (Signatures)</th>
                           <th>Area</th>
                           <th>Requested</th>
                           <th>Actions</th>
@@ -188,37 +180,40 @@ export default function AdminPage() {
                       </thead>
                       <tbody>
                         {issues.map(req => (
-                          <tr key={req.requestID}>
+                          <tr key={req.id}>
                             <td>
-                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#60a5fa' }}>
-                                {req.requestID}
+                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>
+                                {(req.id || '').slice(0, 12)}...
                               </code>
                             </td>
                             <td>
-                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{req.docID}</code>
+                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{req.details?.docID || req.details?.DocID}</code>
                             </td>
-                            <td style={{ fontWeight: 500 }}>{req.tdrID}</td>
+                            <td style={{ fontWeight: 500 }}>{req.details?.tdrID || req.details?.TdrID}</td>
                             <td>
-                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                                {req.owner?.slice(0, 18)}…
-                              </code>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                                  <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'var(--emerald)' }} />
+                                </div>
+                                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
+                              </div>
                             </td>
-                            <td>{req.area?.toLocaleString()} sq m</td>
+                            <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{req.createdAt}</td>
                             <td>
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button
                                   className="btn-success"
-                                  onClick={() => handleApproveIssue(req.requestID)}
-                                  disabled={acting === req.requestID}
+                                  onClick={() => handleApproveIssue(req.id)}
+                                  disabled={acting === req.id}
                                 >
                                   <CheckCircle size={12} />
-                                  {acting === req.requestID ? '…' : 'Approve'}
+                                  {acting === req.id ? '…' : 'Approve'}
                                 </button>
                                 <button
                                   className="btn-danger"
-                                  onClick={() => handleRejectIssue(req.requestID)}
-                                  disabled={acting === req.requestID}
+                                  onClick={() => handleRejectIssue(req.id)}
+                                  disabled={acting === req.id}
                                 >
                                   <XCircle size={12} />
                                   Reject
@@ -252,7 +247,7 @@ export default function AdminPage() {
                           <th>Request ID</th>
                           <th>TDR ID</th>
                           <th>Doc ID</th>
-                          <th>From</th>
+                          <th>Status (Progress)</th>
                           <th>To (New Owner)</th>
                           <th>Requested</th>
                           <th>Actions</th>
@@ -260,37 +255,40 @@ export default function AdminPage() {
                       </thead>
                       <tbody>
                         {transfers.map(req => (
-                          <tr key={req.requestID}>
+                          <tr key={req.id}>
                             <td>
-                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#60a5fa' }}>
-                                {req.requestID}
+                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>
+                                {(req.id || '').slice(0, 12)}...
                               </code>
                             </td>
-                            <td style={{ fontWeight: 500 }}>{req.tdrID}</td>
+                            <td style={{ fontWeight: 500 }}>{req.details?.tdrID || req.details?.TdrID}</td>
                             <td>
-                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{req.docID}</code>
+                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{req.details?.docID || req.details?.DocID}</code>
                             </td>
                             <td>
-                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                                {req.fromOwner?.slice(0, 16)}…
-                              </code>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                                  <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'var(--emerald)' }} />
+                                </div>
+                                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
+                              </div>
                             </td>
-                            <td style={{ fontSize: 12 }}>{req.toOwner}</td>
+                            <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{req.createdAt}</td>
                             <td>
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button
                                   className="btn-success"
-                                  onClick={() => handleApproveTransfer(req.requestID)}
-                                  disabled={acting === req.requestID}
+                                  onClick={() => handleApproveTransfer(req.id)}
+                                  disabled={acting === req.id}
                                 >
                                   <CheckCircle size={12} />
-                                  {acting === req.requestID ? '…' : 'Approve'}
+                                  {acting === req.id ? '…' : 'Approve'}
                                 </button>
                                 <button
                                   className="btn-danger"
-                                  onClick={() => handleRejectTransfer(req.requestID)}
-                                  disabled={acting === req.requestID}
+                                  onClick={() => handleRejectTransfer(req.id)}
+                                  disabled={acting === req.id}
                                 >
                                   <XCircle size={12} />
                                   Reject
@@ -306,9 +304,7 @@ export default function AdminPage() {
               </section>
             </>
           )}
-        </main>
-      </div>
-
+      </main>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )

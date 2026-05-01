@@ -3,8 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import Navbar from '@/components/Navbar'
-import Sidebar from '@/components/Sidebar'
+
 import { changePassword } from '@/lib/api'
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react'
 
@@ -100,11 +99,8 @@ export default function AdminSettingsPage() {
   const passwordStrength = strength(form.newPass)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy-950)' }}>
-      <Navbar />
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main style={{ flex: 1, padding: '32px', minHeight: 'calc(100vh - 64px)' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <main>
           <div style={{ maxWidth: 520 }}>
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
@@ -119,7 +115,7 @@ export default function AdminSettingsPage() {
 
             {/* Account info card */}
             <div className="glass-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+              <div style={{ width: 44, height: 44, background: 'var(--navy-accent)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
                 {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
@@ -179,7 +175,7 @@ export default function AdminSettingsPage() {
                 {/* Strength meter */}
                 {form.newPass && passwordStrength && (
                   <div style={{ marginTop: -10 }}>
-                    <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: 4, background: '#f1f5f9', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: passwordStrength.width, background: passwordStrength.color, borderRadius: 2, transition: 'width 0.3s, background 0.3s' }} />
                     </div>
                     <div style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
@@ -200,7 +196,7 @@ export default function AdminSettingsPage() {
 
                 {/* Match indicator */}
                 {form.confirm && (
-                  <div style={{ marginTop: -10, fontSize: 12, color: form.newPass === form.confirm ? '#34d399' : '#f87171', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ marginTop: -10, fontSize: 12, color: form.newPass === form.confirm ? 'var(--emerald)' : 'var(--red)', display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}>
                     {form.newPass === form.confirm
                       ? <><CheckCircle size={12} /> Passwords match</>
                       : <><AlertCircle size={12} /> Passwords do not match</>
@@ -219,9 +215,9 @@ export default function AdminSettingsPage() {
                   disabled={loading || form.newPass !== form.confirm || !form.current || !form.newPass}
                   style={{
                     padding: '12px', borderRadius: 8, border: 'none', marginTop: 4,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: 'white',
-                    fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    cursor: (loading || form.newPass !== form.confirm || !form.current || !form.newPass) ? 'not-allowed' : 'pointer',
+                    background: 'var(--navy-accent)', color: 'white',
+                    fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     opacity: (loading || form.newPass !== form.confirm || !form.current || !form.newPass) ? 0.5 : 1,
                   }}
                 >
@@ -231,7 +227,6 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </main>
-      </div>
     </div>
   )
 }

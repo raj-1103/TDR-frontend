@@ -3,61 +3,78 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import Navbar from '@/components/Navbar'
-import Sidebar from '@/components/Sidebar'
-import { listUsers, createAdminBySuperAdmin } from '@/lib/api'
-import { UserPlus, ShieldCheck, RefreshCw, CheckCircle, AlertCircle, Mail, User, Copy, X } from 'lucide-react'
+
+import { listUsers, directAssignRole, retireIdentity } from '@/lib/api'
+import { UserPlus, ShieldCheck, RefreshCw, CheckCircle, AlertCircle, Mail, User, Copy, X, Zap, ShieldAlert, Trash2, UserMinus } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function ManageAdminsPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ email: '', name: '' })
-  const [creating, setCreating] = useState(false)
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [search, setSearch] = useState('')
+
+  // Quick Setup State
+  const [quickForm, setQuickForm] = useState({ email: '', role: 'JUNIOR' })
+  const [assigning, setAssigning] = useState(false)
+
+  // Retire State
+  const [retiringUser, setRetiringUser] = useState<any | null>(null)
+  const [processingRetire, setProcessingRetire] = useState(false)
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
-    if (user.role !== 'SUPERADMIN') { router.push('/admin'); return }
+    if (user.role !== 'SUPERADMIN' && user.role !== 'ADMIN') { router.push('/admin'); return }
     load()
   }, [user])
-
-  const showToast = (msg: string, ok: boolean) => {
-    setToast({ msg, ok })
-    setTimeout(() => setToast(null), 4000)
-  }
 
   const load = async () => {
     setLoading(true)
     try {
       const res = await listUsers()
       setUsers(res.users || [])
-    } catch (e: any) { showToast(e.message, false) }
+    } catch (e: any) { toast.error(e.message) }
     setLoading(false)
   }
 
-  const handleCreateAdmin = async (e: React.FormEvent) => {
+  const handleDirectAssign = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.email) return
-    setCreating(true)
+    if (!quickForm.email || !quickForm.role) return
+    setAssigning(true)
     try {
-      const res = await createAdminBySuperAdmin(user!.fabricID, form.email, form.name)
-      showToast(`Admin created! Welcome email sent to ${res.email}`, true)
-      setForm({ email: '', name: '' })
-      setShowForm(false)
+      const res = await directAssignRole(user!.fabricID, quickForm.email, quickForm.role)
+      toast.success(`Role ${quickForm.role} assigned immediately to ${quickForm.email}. TxID: ${res.txID}`)
+      setQuickForm({ email: '', role: 'JUNIOR' })
       await load()
     } catch (err: any) {
-      showToast(err.message || 'Failed to create admin', false)
+      toast.error(err.message || 'Failed to assign role')
     }
-    setCreating(false)
+    setAssigning(false)
   }
 
-  const copy = (text: string) => navigator.clipboard.writeText(text)
+  const handleRetire = async () => {
+    if (!retiringUser) return
+    setProcessingRetire(true)
+    try {
+      const res = await retireIdentity(user!.fabricID, retiringUser.email)
+      toast.success(`Officer ${retiringUser.email} retired successfully. TxID: ${res.txID}`)
+      setRetiringUser(null)
+      await load()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to retire officer')
+    }
+    setProcessingRetire(false)
+  }
 
-  const admins = users.filter(u => u.role === 'ADMIN' || u.role === 'SUPERADMIN')
+
+  const copy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Fabric ID copied')
+  }
+
+  const authorityRoles = ['ADMIN', 'SUPERADMIN', 'JUNIOR', 'ASSISTANT', 'TDO', 'CITY', 'COMMISSIONER']
+  const admins = users.filter(u => authorityRoles.includes(u.role))
   const regularUsers = users.filter(u => u.role === 'USER')
   const filtered = (list: any[]) => list.filter(u =>
     u.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -65,28 +82,8 @@ export default function ManageAdminsPage() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy-950)' }}>
-      <Navbar />
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main style={{ flex: 1, padding: '32px', minHeight: 'calc(100vh - 64px)' }}>
-
-          {/* Toast */}
-          {toast && (
-            <div style={{
-              position: 'fixed', top: 80, right: 24, zIndex: 200,
-              background: toast.ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-              border: `1px solid ${toast.ok ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
-              borderRadius: 10, padding: '12px 18px', fontSize: 13,
-              color: toast.ok ? '#34d399' : '#f87171',
-              display: 'flex', alignItems: 'center', gap: 8, maxWidth: 400,
-              backdropFilter: 'blur(8px)',
-            }}>
-              {toast.ok ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
-              {toast.msg}
-            </div>
-          )}
-
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <main>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
             <div>
@@ -100,24 +97,65 @@ export default function ManageAdminsPage() {
               <button className="btn-ghost" onClick={load} disabled={loading}>
                 <RefreshCw size={14} /> Refresh
               </button>
-              <button
-                onClick={() => setShowForm(true)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
-                  background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: 'white',
-                  border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                }}
-              >
-                <UserPlus size={15} /> Create Admin
-              </button>
             </div>
+          </div>
+
+          {/* Quick Setup Section */}
+          <div className="glass-card" style={{ padding: '24px', marginBottom: 24, border: '1px solid rgba(124, 58, 237, 0.2)', background: 'linear-gradient(to bottom right, #ffffff, #f5f3ff)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 32, height: 32, background: '#7c3aed', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={16} color="white" />
+              </div>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e1b4b' }}>Quick Setup: Direct Role Assignment</h2>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Bypass approval queue and assign authority roles immediately.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleDirectAssign} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: 2, minWidth: 200 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 6 }}>User Email</label>
+                <input 
+                  type="email" 
+                  className="tdr-input" 
+                  placeholder="user@example.com"
+                  value={quickForm.email}
+                  onChange={e => setQuickForm({ ...quickForm, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 150 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 6 }}>Select Role</label>
+                <select 
+                  className="tdr-input"
+                  value={quickForm.role}
+                  onChange={e => setQuickForm({ ...quickForm, role: e.target.value })}
+                  style={{ width: '100%' }}
+                >
+                  <option value="JUNIOR">JUNIOR</option>
+                  <option value="ASSISTANT">ASSISTANT</option>
+                  <option value="TDO">TDO</option>
+                  <option value="CITY">CITY</option>
+                  <option value="COMMISSIONER">COMMISSIONER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </div>
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                style={{ background: '#7c3aed', borderColor: '#7c3aed', padding: '12px 20px' }}
+                disabled={assigning}
+              >
+                {assigning ? 'Assigning...' : 'Assign Role Immediately'}
+              </button>
+            </form>
           </div>
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 24 }}>
             {[
               { label: 'Total Users', value: users.length, color: '#60a5fa' },
-              { label: 'Admins', value: users.filter(u => u.role === 'ADMIN').length, color: '#a78bfa' },
+              { label: 'Admins & Authorities', value: admins.length, color: '#a78bfa' },
               { label: 'Super Admins', value: users.filter(u => u.role === 'SUPERADMIN').length, color: '#f59e0b' },
               { label: 'Regular Users', value: regularUsers.length, color: '#34d399' },
             ].map(({ label, value, color }) => (
@@ -128,108 +166,6 @@ export default function ManageAdminsPage() {
             ))}
           </div>
 
-          {/* Create Admin Modal */}
-          {showForm && (
-            <div style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-            }}>
-              <div className="glass-card" style={{ width: '100%', maxWidth: 460, padding: 32, position: 'relative' }}>
-                <button
-                  onClick={() => { setShowForm(false); setForm({ email: '', name: '' }) }}
-                  style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
-                >
-                  <X size={18} />
-                </button>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                  <div style={{ width: 40, height: 40, background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UserPlus size={18} color="#a78bfa" />
-                  </div>
-                  <div>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>Create New Admin</h2>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                      They'll receive an email with login instructions.
-                    </p>
-                  </div>
-                </div>
-
-                {/* What happens info box */}
-                <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#c4b5fd', marginBottom: 20, lineHeight: 1.7 }}>
-                  <strong>What happens:</strong><br />
-                  1. Admin account created on Fabric CA with role <code>ADMIN</code><br />
-                  2. Saved to DB with temp password <code>ChangeMe123!</code><br />
-                  3. Welcome email sent with login link and temp password
-                </div>
-
-                <form onSubmit={handleCreateAdmin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                      Full Name (optional)
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <User size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-                      <input
-                        type="text"
-                        className="tdr-input"
-                        style={{ paddingLeft: 34 }}
-                        placeholder="Town Planning Officer"
-                        value={form.name}
-                        onChange={e => setForm({ ...form, name: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                      Official Email <span style={{ color: '#f87171' }}>*</span>
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <Mail size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-                      <input
-                        type="email"
-                        className="tdr-input"
-                        style={{ paddingLeft: 34 }}
-                        placeholder="officer@smc.gov.in"
-                        value={form.email}
-                        onChange={e => setForm({ ...form, email: e.target.value })}
-                        required
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
-                  {creating && (
-                    <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#93c5fd' }}>
-                      ⏳ Registering on Hyperledger Fabric CA — this may take 30–60 seconds…
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                    <button
-                      type="submit"
-                      disabled={creating}
-                      style={{
-                        flex: 1, padding: '11px', borderRadius: 8, border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
-                        background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: 'white',
-                        fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                        opacity: creating ? 0.6 : 1,
-                      }}
-                    >
-                      {creating ? 'Creating…' : <><UserPlus size={15} /> Create Admin & Send Email</>}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowForm(false); setForm({ email: '', name: '' }) }}
-                      className="btn-ghost"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
 
           {/* Search */}
           <div style={{ marginBottom: 16 }}>
@@ -245,7 +181,7 @@ export default function ManageAdminsPage() {
           {/* Admins Table */}
           <section style={{ marginBottom: 32 }}>
             <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <ShieldCheck size={13} color="#a78bfa" /> Admins & SuperAdmins ({admins.length})
+              <ShieldCheck size={13} color="var(--navy-400)" /> Admins & Authorities ({admins.length})
             </h2>
 
             {loading ? (
@@ -254,18 +190,25 @@ export default function ManageAdminsPage() {
               <div className="glass-card" style={{ overflowX: 'auto' }}>
                 <table className="tdr-table">
                   <thead>
-                    <tr><th>Name / Email</th><th>Fabric ID</th><th>Role</th><th>Created</th></tr>
+                    <tr><th>Name / Email</th><th>Fabric ID</th><th>Role</th><th>Created</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {filtered(admins).map(u => (
                       <tr key={u.fabricID}>
-                        <td>
-                          <div style={{ fontWeight: 500, fontSize: 14 }}>{u.name || '—'}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{u.email}</div>
+                        <td style={{ padding: '16px 20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 36, height: 36, background: 'rgba(37,99,235,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--navy-400)', border: '1px solid rgba(37,99,235,0.1)' }}>
+                              {(u.name || u.email || 'A').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{u.name || 'Unnamed Officer'}</div>
+                              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{u.email}</div>
+                            </div>
+                          </div>
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#60a5fa' }}>
+                            <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>
                               {u.fabricID?.slice(0, 20)}…
                             </code>
                             <button onClick={() => copy(u.fabricID)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
@@ -274,15 +217,28 @@ export default function ManageAdminsPage() {
                           </div>
                         </td>
                         <td>
-                          <span className={`badge ${u.role === 'SUPERADMIN' ? 'badge-approved' : 'badge-pending'}`}>
+                          <span className={`badge ${authorityRoles.includes(u.role) ? 'badge-approved' : 'badge-pending'}`}>
                             {u.role}
                           </span>
                         </td>
-                        <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{u.createdAt}</td>
+                        <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </td>
+                        <td>
+                          {u.role !== 'SUPERADMIN' && (
+                            <button 
+                              className="btn-ghost" 
+                              style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '6px 12px', fontSize: 12 }}
+                              onClick={() => setRetiringUser(u)}
+                            >
+                              <UserMinus size={13} style={{ marginRight: 6 }} /> Retire
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                     {filtered(admins).length === 0 && (
-                      <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px 0' }}>No admins found</td></tr>
+                      <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px 0' }}>No admins found</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -309,7 +265,7 @@ export default function ManageAdminsPage() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#60a5fa' }}>{u.fabricID?.slice(0, 20)}…</code>
+                          <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>{u.fabricID?.slice(0, 20)}…</code>
                           <button onClick={() => copy(u.fabricID)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}><Copy size={11} /></button>
                         </div>
                       </td>
@@ -325,8 +281,44 @@ export default function ManageAdminsPage() {
             </div>
           </section>
 
+          {/* Retire Confirmation Modal */}
+          {retiringUser && (
+            <div style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+              backdropFilter: 'blur(4px)'
+            }}>
+              <div className="glass-card" style={{ width: '100%', maxWidth: 400, padding: 32, textAlign: 'center' }}>
+                <div style={{ width: 64, height: 64, background: '#fee2e2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                  <ShieldAlert size={32} color="#ef4444" />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Retire Officer?</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.5 }}>
+                  Are you sure you want to retire <strong>{retiringUser.name || retiringUser.email}</strong>? 
+                  This will permanently revoke their access to the TDR portal.
+                </p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button 
+                    className="btn-ghost" 
+                    style={{ flex: 1 }}
+                    onClick={() => setRetiringUser(null)}
+                    disabled={processingRetire}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn-danger" 
+                    style={{ flex: 1, background: '#ef4444', color: 'white', fontWeight: 700 }}
+                    onClick={handleRetire}
+                    disabled={processingRetire}
+                  >
+                    {processingRetire ? 'Retiring...' : 'Yes, Retire'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
-      </div>
     </div>
   )
 }

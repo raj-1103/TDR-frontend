@@ -9,15 +9,15 @@ const notices = [
 export default function NoticeTicker() {
   const repeated = [...notices, ...notices]
   return (
-    <div style={{ background: '#1a2f4a', borderBottom: '1px solid var(--border)', padding: '7px 0', overflow: 'hidden' }}>
+    <div style={{ background: '#ffffff', borderBottom: '1px solid var(--border)', padding: '8px 0', overflow: 'hidden' }}>
       <div className="flex items-center gap-4" style={{ overflow: 'hidden' }}>
-        <div style={{ background: '#dc2626', color: 'white', padding: '2px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 16 }}>
+        <div style={{ background: '#b45309', color: 'white', padding: '3px 12px', borderRadius: 4, fontSize: 11, fontWeight: 800, letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 20 }}>
           NOTICE
         </div>
         <div className="ticker-wrap flex-1">
-          <div className="ticker-content">
+          <div className="ticker-content" style={{ display: 'flex', alignItems: 'center' }}>
             {repeated.map((n, i) => (
-              <span key={i} style={{ fontSize: 12, color: '#cbd5e1', marginRight: 48 }}>{n}</span>
+              <span key={i} style={{ fontSize: 13, color: 'var(--text-primary)', marginRight: 64, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 500 }}>{n}</span>
             ))}
           </div>
         </div>

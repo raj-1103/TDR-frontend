@@ -42,17 +42,17 @@ export default function AdminRegisterPage() {
 
   if (done) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--navy-950)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
-          <div style={{ width: 64, height: 64, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <CheckCircle size={32} color="#34d399" />
+          <div style={{ width: 64, height: 64, background: 'rgba(5,150,105,0.05)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <CheckCircle size={32} color="var(--emerald)" />
           </div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Admin Account Created</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
             Your admin account is pending SuperAdmin approval. You'll be notified by email once activated.
           </p>
           <Link href="/admin-login" style={{ textDecoration: 'none' }}>
-            <button style={{ padding: '11px 24px', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+            <button style={{ padding: '11px 24px', background: 'var(--navy-accent)', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               Go to Admin Login
             </button>
           </Link>
@@ -62,19 +62,19 @@ export default function AdminRegisterPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy-950)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(124,58,237,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
+    <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(37,99,235,0.03) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: 460, position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ width: 56, height: 56, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+          <div style={{ width: 56, height: 56, background: 'var(--navy-accent)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: '0 4px 12px rgba(15,23,42,0.1)' }}>
             <ShieldCheck size={26} color="white" />
           </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700 }}>Admin Registration</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>Requires a valid invite code from SuperAdmin</p>
         </div>
 
-        <div className="glass-card" style={{ padding: 32, borderColor: 'rgba(124,58,237,0.2)' }}>
+        <div className="glass-card" style={{ padding: 32, borderColor: 'var(--border)' }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
               { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Officer Name', icon: User },
@@ -127,16 +127,16 @@ export default function AdminRegisterPage() {
 
             <button type="submit" disabled={loading} style={{
               padding: '12px', borderRadius: 8, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-              background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: 'white',
-              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: 'var(--navy-accent)', color: 'white',
+              fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: loading ? 0.6 : 1, marginTop: 4,
             }}>
               {loading ? 'Registering on Fabric CA…' : <><ShieldCheck size={15} /> Register Admin Account</>}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(148,163,184,0.5)', marginTop: 20 }}>
-            Already registered? <Link href="/admin-login" style={{ color: 'rgba(167,139,250,0.7)', textDecoration: 'none' }}>Sign in →</Link>
+          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', marginTop: 20 }}>
+            Already registered? <Link href="/admin-login" style={{ color: 'var(--navy-400)', textDecoration: 'none', fontWeight: 600 }}>Sign in →</Link>
           </p>
         </div>
       </div>

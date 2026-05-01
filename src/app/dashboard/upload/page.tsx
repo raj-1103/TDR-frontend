@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { uploadDocument } from '@/lib/api'
 import { Upload, FileText, CheckCircle, Copy, AlertCircle, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function UploadPage() {
   const { user } = useAuth()
@@ -11,6 +12,7 @@ export default function UploadPage() {
   const [result, setResult] = useState<{ docID: string; txID: string } | null>(null)
   const [error, setError] = useState('')
   const [drag, setDrag] = useState(false)
+  const [copiedId, setCopiedId] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFile = (f: File) => {
@@ -45,7 +47,12 @@ export default function UploadPage() {
     }
   }
 
-  const copy = (text: string) => navigator.clipboard.writeText(text)
+  const copy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    toast.success(`${id} copied to clipboard`)
+    setTimeout(() => setCopiedId(''), 2000)
+  }
 
   return (
     <div style={{ maxWidth: 640 }}>
@@ -66,11 +73,13 @@ export default function UploadPage() {
             { label: 'Document ID', value: result.docID },
             { label: 'Transaction ID', value: result.txID },
           ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 10, textAlign: 'left' }}>
+            <div key={label} style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 10, textAlign: 'left' }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#60a5fa', wordBreak: 'break-all' }}>{value}</code>
-                <button onClick={() => copy(value)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}><Copy size={13} /></button>
+                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)', wordBreak: 'break-all' }}>{value}</code>
+                <button onClick={() => copy(value, label)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copiedId === label ? '#34d399' : 'var(--text-secondary)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500 }}>
+                  {copiedId === label ? <><CheckCircle size={13} /> Copied!</> : <Copy size={13} />}
+                </button>
               </div>
             </div>
           ))}
@@ -92,12 +101,12 @@ export default function UploadPage() {
             onDrop={handleDrop}
             onClick={() => fileRef.current?.click()}
             style={{
-              border: `2px dashed ${drag ? 'rgba(59,130,246,0.6)' : file ? 'rgba(16,185,129,0.4)' : 'var(--border)'}`,
+              border: `2px dashed ${drag ? 'rgba(37,99,235,0.6)' : file ? 'rgba(5,150,105,0.4)' : 'var(--border)'}`,
               borderRadius: 12,
               padding: '40px 24px',
               textAlign: 'center',
               cursor: 'pointer',
-              background: drag ? 'rgba(59,130,246,0.05)' : file ? 'rgba(16,185,129,0.04)' : 'transparent',
+              background: drag ? 'rgba(37,99,235,0.03)' : file ? 'rgba(5,150,105,0.02)' : 'transparent',
               transition: 'all 0.2s',
               marginBottom: 20,
             }}
@@ -126,7 +135,7 @@ export default function UploadPage() {
           </div>
 
           {/* Info */}
-          <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, padding: '12px 16px', fontSize: 12, color: '#93c5fd', marginBottom: 20, lineHeight: 1.6 }}>
+          <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '12px 16px', fontSize: 12, color: 'var(--navy-accent)', marginBottom: 20, lineHeight: 1.6 }}>
             📌 Your file will be hashed (Keccak-256) and submitted to Hyperledger Fabric via the <code>UploadDocument</code> chaincode function. The original file is stored server-side for OCR during transfers. PNG/JPG scans of TDR certificates are fully supported.
           </div>
 

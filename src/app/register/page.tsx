@@ -116,19 +116,19 @@ export default function RegisterPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{
                   width: 24, height: 24, borderRadius: '50%',
-                  background: i === 0 && step === 'details' ? '#1d4ed8' : i === 0 ? '#10b981' : step === 'otp' ? '#1d4ed8' : 'rgba(255,255,255,0.1)',
+                  background: i === 0 && step === 'details' ? 'var(--navy-accent)' : i === 0 ? 'var(--emerald)' : step === 'otp' ? 'var(--navy-accent)' : '#f1f5f9',
                   border: '2px solid',
-                  borderColor: i === 0 ? (step === 'otp' ? '#10b981' : '#1d4ed8') : step === 'otp' ? '#1d4ed8' : 'var(--border)',
+                  borderColor: i === 0 ? (step === 'otp' ? 'var(--emerald)' : 'var(--navy-accent)') : step === 'otp' ? 'var(--navy-accent)' : 'var(--border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: 'white',
+                  fontSize: 11, fontWeight: 700, color: i === 1 && step === 'details' ? 'var(--text-secondary)' : 'white',
                 }}>
                   {i === 0 && step === 'otp' ? <CheckCircle size={12} /> : i + 1}
                 </div>
-                <span style={{ fontSize: 12, color: (i === 0 && step === 'details') || (i === 1 && step === 'otp') ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: (i === 0 && step === 'details') || (i === 1 && step === 'otp') ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                   {label}
                 </span>
               </div>
-              {i < 1 && <div style={{ width: 32, height: 1, background: step === 'otp' ? '#10b981' : 'var(--border)' }} />}
+              {i < 1 && <div style={{ width: 32, height: 1, background: step === 'otp' ? 'var(--emerald)' : 'var(--border)' }} />}
             </div>
           ))}
         </div>
@@ -190,7 +190,7 @@ export default function RegisterPage() {
               )}
 
               {loading && (
-                <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#93c5fd' }}>
+                <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '10px 14px', fontSize: 11, color: 'var(--navy-accent)', lineHeight: 1.5 }}>
                   ⏳ Registering on Hyperledger Fabric CA — this may take 30–60 seconds…
                 </div>
               )}
@@ -201,7 +201,7 @@ export default function RegisterPage() {
             </form>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#34d399' }}>
+              <div style={{ background: 'rgba(5,150,105,0.03)', border: '1px solid rgba(5,150,105,0.15)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--emerald)', fontWeight: 600 }}>
                 ✅ Account created! Check your email for the 6-digit OTP.
               </div>
 
@@ -224,8 +224,8 @@ export default function RegisterPage() {
                         width: 48, height: 56,
                         textAlign: 'center',
                         fontSize: 22, fontWeight: 700,
-                        background: digit ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)',
-                        border: `2px solid ${digit ? 'rgba(59,130,246,0.5)' : 'var(--border)'}`,
+                        background: digit ? 'rgba(37,99,235,0.03)' : '#f8fafc',
+                        border: `2px solid ${digit ? 'var(--navy-400)' : 'var(--border)'}`,
                         borderRadius: 10,
                         color: 'var(--text-primary)',
                         outline: 'none',
@@ -250,7 +250,7 @@ export default function RegisterPage() {
                 {countdown > 0 ? (
                   <span>Resend in <strong style={{ color: 'var(--text-primary)' }}>{countdown}s</strong></span>
                 ) : (
-                  <button onClick={handleResend} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#60a5fa', fontSize: 13 }}>
+                  <button onClick={handleResend} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--navy-400)', fontSize: 13, fontWeight: 600 }}>
                     <RefreshCw size={12} style={{ display: 'inline', marginRight: 4 }} />Resend OTP
                   </button>
                 )}
@@ -259,7 +259,7 @@ export default function RegisterPage() {
           )}
 
           <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', marginTop: 20 }}>
-            Already registered? <Link href="/login" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
+            Already registered? <Link href="/login" style={{ color: 'var(--navy-400)', textDecoration: 'none', fontWeight: 700 }}>Sign in</Link>
           </p>
         </div>
       </div>

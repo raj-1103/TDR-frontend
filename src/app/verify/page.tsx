@@ -2,15 +2,14 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import Navbar from '@/components/Navbar'
-import Sidebar from '@/components/Sidebar'
+
 import { verifyDocument } from '@/lib/api'
 import { Search, CheckCircle, XCircle, AlertCircle, Shield, ExternalLink } from 'lucide-react'
 
 export default function VerifyPage() {
   const { user } = useAuth()
   const params = useSearchParams()
-  const [form, setForm] = useState({ docID: '', hash: '' })
+  const [form, setForm] = useState({ docID: '' })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
@@ -18,17 +17,16 @@ export default function VerifyPage() {
   // Auto-verify if URL has query params (from QR code scan)
   useEffect(() => {
     const docID = params.get('docID')
-    const hash = params.get('hash')
-    if (docID && hash) {
-      setForm({ docID, hash })
-      doVerify(docID, hash)
+    if (docID) {
+      setForm({ docID })
+      doVerify(docID)
     }
   }, [])
 
-  const doVerify = async (docID: string, hash: string) => {
+  const doVerify = async (docID: string) => {
     setError(''); setResult(null); setLoading(true)
     try {
-      const res = await verifyDocument(docID, hash)
+      const res = await verifyDocument(docID)
       setResult(res)
     } catch (err: any) {
       setError(err.message || 'Verification failed')
@@ -39,16 +37,12 @@ export default function VerifyPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    doVerify(form.docID, form.hash)
+    doVerify(form.docID)
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy-950)' }}>
-      <Navbar />
-
-      <div style={{ display: 'flex' }}>
-        {user && <Sidebar />}
-        <main style={{ flex: 1, padding: user ? '32px' : '48px 24px', minHeight: 'calc(100vh - 100px)' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
+      <main>
           <div style={{ maxWidth: 640, margin: '0 auto' }}>
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -59,7 +53,7 @@ export default function VerifyPage() {
                 Verify TDR Document
               </h1>
               <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, maxWidth: 480, margin: '0 auto' }}>
-                Enter a Document ID and hash to verify authenticity on the Hyperledger Fabric blockchain. This page is publicly accessible.
+                Enter a Document ID to verify authenticity on the Hyperledger Fabric blockchain. This page is publicly accessible.
               </p>
             </div>
 
@@ -77,23 +71,6 @@ export default function VerifyPage() {
                     onChange={e => setForm({ ...form, docID: e.target.value })}
                     required
                   />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                    Document Hash (Keccak-256)
-                  </label>
-                  <input
-                    className="tdr-input"
-                    placeholder="64-character hex hash"
-                    value={form.hash}
-                    onChange={e => setForm({ ...form, hash: e.target.value })}
-                    required
-                    style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}
-                  />
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
-                    Found on the TDR certificate PDF under "Blockchain Verification"
-                  </div>
                 </div>
 
                 {error && (
@@ -114,8 +91,8 @@ export default function VerifyPage() {
                 className="glass-card animate-in"
                 style={{
                   padding: 28,
-                  borderColor: result.valid ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)',
-                  background: result.valid ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)',
+                  borderColor: result.valid ? 'rgba(5,150,105,0.2)' : 'rgba(220,38,38,0.2)',
+                  background: result.valid ? 'rgba(5,150,105,0.02)' : 'rgba(220,38,38,0.02)',
                 }}
               >
                 {/* Status banner */}
@@ -132,7 +109,7 @@ export default function VerifyPage() {
                     }
                   </div>
                   <div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: result.valid ? '#34d399' : '#f87171', fontFamily: 'var(--font-display)' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: result.valid ? 'var(--emerald)' : 'var(--red)', fontFamily: 'var(--font-display)' }}>
                       {result.valid ? 'Document Authentic' : 'Verification Failed'}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{result.reason}</div>
@@ -144,6 +121,7 @@ export default function VerifyPage() {
                   {[
                     { label: 'Status', value: result.status, mono: false },
                     { label: 'Document ID', value: result.docID, mono: true },
+                    result.hash ? { label: 'Document Hash', value: result.hash, mono: true } : null,
                     result.ethTxHash ? { label: 'Ethereum Tx Hash', value: result.ethTxHash, mono: true } : null,
                     result.merkleRoot ? { label: 'Merkle Root', value: result.merkleRoot, mono: true } : null,
                     result.batchID ? { label: 'Batch ID', value: result.batchID, mono: false } : null,
@@ -153,9 +131,10 @@ export default function VerifyPage() {
                       <span style={{
                         fontSize: item.mono ? 11 : 13,
                         fontFamily: item.mono ? 'var(--font-mono)' : 'var(--font-body)',
-                        color: '#60a5fa',
+                        color: 'var(--navy-accent)',
                         wordBreak: 'break-all',
                         textAlign: 'right',
+                        fontWeight: item.mono ? 500 : 400,
                       }}>
                         {item.value}
                       </span>
@@ -185,7 +164,6 @@ export default function VerifyPage() {
             </div>
           </div>
         </main>
-      </div>
     </div>
   )
 }

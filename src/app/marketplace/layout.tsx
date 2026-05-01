@@ -1,6 +1,6 @@
 'use client'
 import PortalLayout from '@/components/PortalLayout'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
   return <PortalLayout>{children}</PortalLayout>
 }
