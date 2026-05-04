@@ -66,24 +66,31 @@ export default function DashboardPage() {
     if (!user) return
     setLoading(true)
     try {
-      const [docsRes, reqsRes, marketRes, tdrsRes, historyRes] = await Promise.all([
+      const [docsResult, reqsResult, marketResult, tdrsResult, historyResult] = await Promise.allSettled([
         getMyDocuments(user.fabricID),
         getMyRequests(user.fabricID),
         getMarketplaceListings(),
         getMyTDRs(user.fabricID),
         getMyTransferHistory(user.fabricID),
       ])
-      setDocs(docsRes.documents || [])
-      setTransfers(reqsRes.transferRequests || [])
-      setIssues(reqsRes.issueRequests || [])
-      setListings(marketRes.listings || [])
-      setMyTDRs(tdrsRes.tdrs || [])
-      setTransferHistory(historyRes.history || [])
+
+      if (docsResult.status === 'fulfilled')    setDocs(docsResult.value.documents || [])
+      if (reqsResult.status === 'fulfilled') {
+        setTransfers(reqsResult.value.transferRequests || [])
+        setIssues(reqsResult.value.issueRequests || [])
+      }
+      if (marketResult.status === 'fulfilled')  setListings(marketResult.value.listings || [])
+      if (tdrsResult.status === 'fulfilled')    setMyTDRs(tdrsResult.value.tdrs || [])
+      if (historyResult.status === 'fulfilled') setTransferHistory(historyResult.value.history || [])
+
+      // Log any non-critical failures (missing backend endpoints)
+      ;[docsResult, reqsResult, marketResult, tdrsResult, historyResult].forEach((r, i) => {
+        if (r.status === 'rejected') console.warn(`Dashboard API call ${i} failed (non-critical):`, r.reason)
+      })
 
       const adminRoles = ['ADMIN', 'SUPERADMIN', 'JUNIOR', 'ASSISTANT', 'TDO', 'CITY', 'COMMISSIONER']
       if (adminRoles.includes(user.role)) {
-        const stats = await getAdminStats()
-        setAdminStats(stats)
+        try { const stats = await getAdminStats(); setAdminStats(stats) } catch {}
       }
     } catch (e) {
       console.error(e)

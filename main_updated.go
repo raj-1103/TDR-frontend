@@ -1646,6 +1646,133 @@ func getMutationGraphHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ════════════════════════════════════════════════════════
+//  TDR OWNERSHIP & TRANSFER HISTORY
+// ════════════════════════════════════════════════════════
+
+// GET /my-tdrs?fabricID=... — returns TDRs currently owned by this user
+func myTDRsHandler(w http.ResponseWriter, r *http.Request) {
+	fabricID := r.URL.Query().Get("fabricID")
+	if fabricID == "" {
+		http.Error(w, "fabricID required", 400)
+		return
+	}
+
+	// TDRs issued to this user (from issue_requests) or transferred to them
+	rows, err := db.Query(`
+		SELECT d.tdr_id, d.status, COALESCE(ir.area, 0),
+		       ir.created_at,
+		       COALESCE(ir.owner, '') AS acquired_from
+		FROM documents d
+		JOIN issue_requests ir ON ir.doc_id = d.doc_id
+		WHERE ir.owner = $1 AND ir.status = 'APPROVED' AND d.tdr_id IS NOT NULL AND d.tdr_id != ''
+		ORDER BY ir.created_at DESC`, fabricID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows.Close()
+
+	type TDRRecord struct {
+		TdrID        string `json:"tdrID"`
+		Owner        string `json:"owner"`
+		FabricID     string `json:"fabricID"`
+		Area         int    `json:"area"`
+		Status       string `json:"status"`
+		AcquiredAt   string `json:"acquiredAt"`
+		AcquiredFrom string `json:"acquiredFrom"`
+		ListingID    string `json:"listingID"`
+		AskingPrice  int    `json:"askingPrice"`
+	}
+
+	var tdrs []TDRRecord
+	for rows.Next() {
+		var rec TDRRecord
+		var ts time.Time
+		rows.Scan(&rec.TdrID, &rec.Status, &rec.Area, &ts, &rec.AcquiredFrom)
+		rec.Owner = fabricID
+		rec.FabricID = fabricID
+		rec.AcquiredAt = ts.Format(time.RFC3339)
+		// Map document status to TDR status
+		switch rec.Status {
+		case "TDR_ISSUED":
+			rec.Status = "ACTIVE"
+		case "ON_SALE":
+			rec.Status = "LISTED"
+		}
+		tdrs = append(tdrs, rec)
+	}
+
+	if tdrs == nil {
+		tdrs = []TDRRecord{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"tdrs": tdrs})
+}
+
+// GET /my-transfer-history?fabricID=... — returns sent/received TDR transfers
+func myTransferHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	fabricID := r.URL.Query().Get("fabricID")
+	if fabricID == "" {
+		http.Error(w, "fabricID required", 400)
+		return
+	}
+
+	rows, err := db.Query(`
+		SELECT h.tdr_id, h.action, h.from_owner, h.to_owner,
+		       h.timestamp, h.fabric_tx_id,
+		       COALESCE(uf.name, h.from_owner) AS seller_name,
+		       COALESCE(ut.name, h.to_owner)   AS buyer_name
+		FROM tdr_history h
+		LEFT JOIN users uf ON uf.fabric_id = h.from_owner
+		LEFT JOIN users ut ON ut.fabric_id = h.to_owner
+		WHERE (h.from_owner = $1 OR h.to_owner = $1)
+		  AND h.action IN ('TDR_TRANSFERRED', 'TRANSFER_APPROVED', 'MARKETPLACE_SOLD', 'PURCHASE_CONFIRMED')
+		ORDER BY h.timestamp DESC
+		LIMIT 100`, fabricID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows.Close()
+
+	type HistoryEntry struct {
+		TdrID      string  `json:"tdrID"`
+		Action     string  `json:"action"`
+		FromOwner  string  `json:"fromOwner"`
+		ToOwner    string  `json:"toOwner"`
+		Timestamp  string  `json:"timestamp"`
+		TxID       string  `json:"txID"`
+		ListingID  string  `json:"listingID"`
+		AskingPrice int    `json:"askingPrice"`
+		SoldAmount  float64 `json:"soldAmount"`
+		BuyerName  string  `json:"buyerName"`
+		SellerName string  `json:"sellerName"`
+		Direction  string  `json:"direction"`
+	}
+
+	var history []HistoryEntry
+	for rows.Next() {
+		var h HistoryEntry
+		var ts time.Time
+		rows.Scan(&h.TdrID, &h.Action, &h.FromOwner, &h.ToOwner,
+			&ts, &h.TxID, &h.SellerName, &h.BuyerName)
+		h.Timestamp = ts.Format(time.RFC3339)
+		if h.FromOwner == fabricID {
+			h.Direction = "SENT"
+		} else {
+			h.Direction = "RECEIVED"
+		}
+		history = append(history, h)
+	}
+
+	if history == nil {
+		history = []HistoryEntry{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"history": history})
+}
+
+// ════════════════════════════════════════════════════════
 //  MAIN
 // ════════════════════════════════════════════════════════
 
@@ -1694,6 +1821,10 @@ func main() {
 	mux.HandleFunc("/verify",           verifyHandler)
 	mux.HandleFunc("/history",          historyHandler)
 	mux.HandleFunc("/mutation-graph",   getMutationGraphHandler)
+
+	// TDR Ownership & History
+	mux.HandleFunc("/my-tdrs",             myTDRsHandler)
+	mux.HandleFunc("/my-transfer-history", myTransferHistoryHandler)
 
 	handler := corsMiddleware(mux)
 	fmt.Println("Server running at :8080")
