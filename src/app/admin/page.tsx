@@ -213,8 +213,8 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
-                            <td style={{ fontSize: 12, fontWeight: 400 }}>
-                              {userMap[req.requester] || req.requester || 'Unknown'}
+                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
+                              {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
                             </td>
                             <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
@@ -292,8 +292,8 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
-                            <td style={{ fontSize: 12, fontWeight: 400 }}>
-                              {userMap[req.requester] || req.requester || 'Unknown'}
+                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
+                              {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
                             </td>
                             <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
