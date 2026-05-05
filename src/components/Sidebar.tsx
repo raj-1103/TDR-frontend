@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { LayoutDashboard, Upload, ArrowLeftRight, CheckCircle, ShieldCheck, Users, FileSearch, LogOut, Clock, Settings, Menu, ShoppingBag, ListChecks } from 'lucide-react'
+import { LayoutDashboard, Upload, UploadCloud, ArrowLeftRight, CheckCircle, ShieldCheck, Users, FileSearch, LogOut, Clock, Settings, Menu, ShoppingBag, ListChecks } from 'lucide-react'
 
   const authorityRoles = ['ADMIN', 'SUPERADMIN', 'JUNIOR', 'ASSISTANT', 'TDO', 'CITY', 'COMMISSIONER']
 
@@ -17,6 +17,7 @@ import { LayoutDashboard, Upload, ArrowLeftRight, CheckCircle, ShieldCheck, User
     { href: '/admin',              label: 'Admin Panel',       icon: ShieldCheck,     roles: authorityRoles },
     { href: '/admin/approvals',    label: 'Pending Approvals', icon: ListChecks,      roles: authorityRoles },
     { href: '/admin/users',        label: 'Manage Admins',     icon: Users,           roles: ['ADMIN','SUPERADMIN'] }, // Keep this restricted
+    { href: '/admin/bulk-upload',  label: 'Bulk Upload',       icon: UploadCloud,     roles: ['ADMIN','SUPERADMIN'] },
     { href: '/admin/settings',     label: 'Settings',          icon: Settings,        roles: [...authorityRoles, 'USER'] },
   ]
 

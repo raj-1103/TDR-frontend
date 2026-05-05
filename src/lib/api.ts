@@ -231,6 +231,11 @@ export const uploadDocument = async (fabricID: string, file: File) => {
   return res.json() as Promise<{ docID: string; txID: string }>
 }
 
+export const bulkUploadDocuments = (body: { fabricID: string, documents: { docId?: string, jsonContent: string }[] }) =>
+  req<{ message: string; txID: string; count: number; documents: { docId: string; hash: string }[] }>('/bulk-upload', {
+    method: 'POST', body: JSON.stringify(body)
+  })
+
 export const verifyDocument = (docID: string) =>
   req<VerifyResult>(`/verify?docID=${docID}`)
 
@@ -288,8 +293,6 @@ export const rejectIssueTDR = (adminFabricID: string, requestID: string, reason:
     method: 'POST', body: JSON.stringify({ adminFabricID, requestID, reason })
   })
 
-// ── TDR Transfer ──────────────────────────────────────────
-
 export const requestTransfer = (body: { fabricID: string; docID: string; newOwner: string }) =>
   req<{ requestID: string; txID: string; status: string }>('/request-transfer', {
     method: 'POST', body: JSON.stringify(body)
@@ -330,8 +333,6 @@ export const rejectTransfer = (adminFabricID: string, requestID: string, reason:
     method: 'POST', body: JSON.stringify({ adminFabricID, requestID, reason })
   })
 
-// ── Admin ─────────────────────────────────────────────────
-
 export const promoteToAdmin = (superAdminFabricID: string, targetFabricID: string) =>
   req<{ targetFabricID: string; newRole: string; txID: string }>('/promote-to-admin', {
     method: 'POST', body: JSON.stringify({ superAdminFabricID, targetFabricID })
@@ -351,8 +352,6 @@ export const changePassword = (fabricID: string, currentPassword: string, newPas
   req<{ message: string }>('/change-password', {
     method: 'POST', body: JSON.stringify({ fabricID, currentPassword, newPassword })
   })
-
-// ── Marketplace ──────────────────────────────────────────
 
 export const getMarketplaceListings = () =>
   req<{ listings: any[] }>('/marketplace/listings').then(res => ({
@@ -426,8 +425,6 @@ export const retireIdentity = (superAdminFabricID: string, targetEmail: string) 
   req<{ message: string, txID: string }>('/retire-identity', {
     method: 'POST', body: JSON.stringify({ superAdminFabricID, targetEmail })
   })
-
-// ── TDR Ownership & History ───────────────────────────────
 
 export interface TDRRecord {
   tdrID:        string

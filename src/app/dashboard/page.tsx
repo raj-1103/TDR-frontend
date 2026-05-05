@@ -586,7 +586,7 @@ export default function DashboardPage() {
               <tbody>
                 {issues.map(r => (
                   <tr key={r.requestID}>
-                    <td><span style={{ fontSize: 11, color: 'var(--emerald)', fontWeight: 700 }}>ISSUE</span></td>
+                    <td><span style={{ fontSize: 11, color: 'var(--emerald)', fontWeight: 700 }}>{r.typeText || 'ISSUE'}</span></td>
                     <td><code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{r.requestID.slice(0,8)}...</code></td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -615,7 +615,7 @@ export default function DashboardPage() {
                 ))}
                 {transfers.map(r => (
                   <tr key={r.requestID}>
-                    <td><span style={{ fontSize: 11, color: '#a78bfa', fontWeight: 700 }}>TRANSFER</span></td>
+                    <td><span style={{ fontSize: 11, color: 'var(--navy-accent)', fontWeight: 700 }}>{r.typeText || 'TRANSFER'}</span></td>
                     <td><code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{r.requestID.slice(0,8)}...</code></td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

@@ -173,6 +173,7 @@ export default function AdminPage() {
                           <th>Doc ID</th>
                           <th>TDR ID</th>
                           <th>Status (Signatures)</th>
+                          <th>Requester</th>
                           <th>Area</th>
                           <th>Requested</th>
                           <th>Actions</th>
@@ -198,8 +199,11 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
+                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
+                              {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
+                            </td>
                             <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
-                            <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{req.createdAt}</td>
+                            <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
                             <td>
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button
@@ -248,6 +252,7 @@ export default function AdminPage() {
                           <th>TDR ID</th>
                           <th>Doc ID</th>
                           <th>Status (Progress)</th>
+                          <th>Requester</th>
                           <th>To (New Owner)</th>
                           <th>Requested</th>
                           <th>Actions</th>
@@ -273,8 +278,11 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
+                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
+                              {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
+                            </td>
                             <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
-                            <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{req.createdAt}</td>
+                            <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
                             <td>
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button
