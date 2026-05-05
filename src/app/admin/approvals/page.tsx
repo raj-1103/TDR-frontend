@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { getPendingActions, approveAction, rejectAction, listUsers, PendingAction } from '@/lib/api'
-import { CheckCircle, XCircle, RefreshCw, ListChecks, MessageSquare, AlertCircle } from 'lucide-react'
+import { CheckCircle, XCircle, RefreshCw, ListChecks, MessageSquare, AlertCircle, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
 const ACTION_MAP: Record<string, string> = {
@@ -41,9 +41,9 @@ export default function PendingApprovalsPage() {
 
       if (usersRes.status === 'fulfilled') {
         const map: Record<string, string> = {}
-        ;(usersRes.value.users || []).forEach((u: any) => {
-          if (u.fabricID) map[u.fabricID] = u.name || u.email || u.fabricID
-        })
+          ; (usersRes.value.users || []).forEach((u: any) => {
+            if (u.fabricID) map[u.fabricID] = u.name || u.email || u.fabricID
+          })
         setUserMap(map)
       }
 
@@ -124,6 +124,7 @@ export default function PendingApprovalsPage() {
                   <th>Requester</th>
                   <th>Status</th>
                   <th>Details</th>
+                  <th>Preview</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -141,11 +142,11 @@ export default function PendingApprovalsPage() {
                         <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>{(action.id || '').slice(0, 12)}...</code>
                       </td>
                       <td>
-                        <span style={{ 
-                          fontSize: 11, 
-                          fontWeight: 700, 
-                          padding: '4px 8px', 
-                          borderRadius: 6, 
+                        <span style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: '4px 8px',
+                          borderRadius: 6,
                           background: 'rgba(59,130,246,0.1)',
                           color: 'var(--navy-400)'
                         }}>
@@ -165,14 +166,24 @@ export default function PendingApprovalsPage() {
                       </td>
                       <td style={{ fontSize: 12 }}>
                         {action.type === 'ISSUE_TDR' && (
-                          <div style={{ opacity: 0.8 }}>Doc: {action.details.docID || action.details.docID}<br/>TDR: {action.details.tdrID || action.details.tdrID}</div>
+                          <div style={{ opacity: 0.8 }}>Doc: {action.details.docID || action.details.docID}<br />TDR: {action.details.tdrID || action.details.tdrID}</div>
                         )}
                         {action.type === 'TRANSFER_TDR' && (
-                          <div style={{ opacity: 0.8 }}>From: {(action.details.fromOwner || action.details.fromOwner)?.slice(0,10)}...<br/>To: {(action.details.toOwner || action.details.toOwner)?.slice(0,10)}...</div>
+                          <div style={{ opacity: 0.8 }}>From: {(action.details.fromOwner || action.details.fromOwner)?.slice(0, 10)}...<br />To: {(action.details.toOwner || action.details.toOwner)?.slice(0, 10)}...</div>
                         )}
                         {action.type === 'ACCEPT_BID' && (
-                          <div style={{ opacity: 0.8 }}>TDR: {action.details.tdrID || action.details.tdrID}<br/>Price: ₹ {(action.details.price || action.details.price || 0).toLocaleString()}</div>
+                          <div style={{ opacity: 0.8 }}>TDR: {action.details.tdrID || action.details.tdrID}<br />Price: ₹ {(action.details.price || action.details.price || 0).toLocaleString()}</div>
                         )}
+                      </td>
+                      <td>
+                        <button
+                          className="btn-ghost"
+                          title="Preview Document"
+                          onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${action.details.docID}`, '_blank')}
+                          style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
+                        >
+                          <Eye size={18} />
+                        </button>
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
@@ -204,8 +215,8 @@ export default function PendingApprovalsPage() {
 
         {/* Modal */}
         {showModal && (
-          <div style={{ 
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
             backdropFilter: 'blur(4px)'
           }}>
@@ -226,8 +237,8 @@ export default function PendingApprovalsPage() {
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                 <button className="btn-ghost" onClick={() => setShowModal(null)}>Cancel</button>
-                <button 
-                  className={showModal.type === 'approve' ? 'btn-success' : 'btn-danger'} 
+                <button
+                  className={showModal.type === 'approve' ? 'btn-success' : 'btn-danger'}
                   onClick={handleAction}
                   disabled={acting !== null || (showModal.type === 'reject' && !modalText.trim())}
                 >

@@ -4,13 +4,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 
+
 import {
   getPendingActions,
   approveAction,
   rejectAction,
   listUsers,
 } from '@/lib/api'
-import { CheckCircle, XCircle, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react'
+import { CheckCircle, XCircle, RefreshCw, ShieldCheck, AlertCircle, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminPage() {
@@ -190,6 +191,7 @@ export default function AdminPage() {
                         <th>Requester</th>
                         <th>Area</th>
                         <th>Requested</th>
+                        <th>Preview</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -218,6 +220,16 @@ export default function AdminPage() {
                           </td>
                           <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
                           <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
+                          <td>
+                            <button 
+                              className="btn-ghost" 
+                              title="Preview"
+                              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${req.details?.docID || req.details?.DocID}`, '_blank')}
+                              style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
+                            >
+                              <Eye size={18} />
+                            </button>
+                          </td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
                               <button
@@ -261,16 +273,17 @@ export default function AdminPage() {
                 <div className="glass-card" style={{ overflowX: 'auto' }}>
                   <table className="tdr-table" style={{ minWidth: 700 }}>
                     <thead>
-                      <tr>
-                        <th>Request ID</th>
-                        <th>TDR ID</th>
-                        <th>Doc ID</th>
-                        <th>Status (Progress)</th>
-                        <th>Requester</th>
-                        <th>To (New Owner)</th>
-                        <th>Requested</th>
-                        <th>Actions</th>
-                      </tr>
+                        <tr>
+                          <th>Request ID</th>
+                          <th>TDR ID</th>
+                          <th>Doc ID</th>
+                          <th>Status (Progress)</th>
+                          <th>Requester</th>
+                          <th>To (New Owner)</th>
+                          <th>Requested</th>
+                          <th>Preview</th>
+                          <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                       {transfers.map(req => (
@@ -297,6 +310,16 @@ export default function AdminPage() {
                           </td>
                           <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
                           <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
+                          <td>
+                            <button 
+                              className="btn-ghost" 
+                              title="Preview"
+                              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${req.details?.docID || req.details?.DocID}`, '_blank')}
+                              style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
+                            >
+                              <Eye size={18} />
+                            </button>
+                          </td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
                               <button
