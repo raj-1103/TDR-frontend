@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import { getPendingActions, approveAction, rejectAction, PendingAction } from '@/lib/api'
+import { getPendingActions, approveAction, rejectAction, listUsers, PendingAction } from '@/lib/api'
 import { CheckCircle, XCircle, RefreshCw, ListChecks, MessageSquare, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -22,6 +22,7 @@ export default function PendingApprovalsPage() {
   const [acting, setActing] = useState<string | null>(null)
   const [showModal, setShowModal] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null)
   const [modalText, setModalText] = useState('')
+  const [userMap, setUserMap] = useState<Record<string, string>>({}) // fabricID → name
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
@@ -33,24 +34,36 @@ export default function PendingApprovalsPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const res = await getPendingActions(user?.role, user?.fabricID)
-      const rawActions = res.actions || res.Actions || []
-      
-      const normalized = rawActions.map((a: any) => ({
-        id: a.actionId || a.ActionID || a.id || a.ID || '',
-        type: a.actionType || a.ActionType || a.type || a.Type || '',
-        requester: a.requestedBy || a.RequestedBy || a.requester || a.Requester || '',
-        createdAt: a.requestedAt || a.RequestedAt || a.createdAt || a.CreatedAt || '',
-        status: a.status || a.Status || '',
-        details: a.payload || a.Payload || a.details || a.Details || {},
-        approvals: a.approvals ?? 0,
-        totalRequired: a.totalRequired ?? a.TotalRequired ?? 5,
-      }))
+      const [actionsRes, usersRes] = await Promise.allSettled([
+        getPendingActions(user?.role, user?.fabricID),
+        listUsers(),
+      ])
 
-      // Since the backend now correctly filters by role/level, 
-      // we can trust the results and skip the redundant frontend filter.
-      setActions(normalized)
-      console.log(`[DEBUG] Loaded ${normalized.length} actions in Approval Queue`)
+      if (usersRes.status === 'fulfilled') {
+        const map: Record<string, string> = {}
+        ;(usersRes.value.users || []).forEach((u: any) => {
+          if (u.fabricID) map[u.fabricID] = u.name || u.email || u.fabricID
+        })
+        setUserMap(map)
+      }
+
+      if (actionsRes.status === 'fulfilled') {
+        const rawActions = actionsRes.value.actions || actionsRes.value.actions || []
+        const normalized = rawActions.map((a: any) => ({
+          id: a.actionId || a.ActionID || a.id || a.ID || '',
+          type: a.actionType || a.ActionType || a.type || a.Type || '',
+          requester: a.requestedBy || a.RequestedBy || a.requester || a.Requester || '',
+          createdAt: a.requestedAt || a.RequestedAt || a.createdAt || a.CreatedAt || '',
+          status: a.status || a.Status || '',
+          details: a.payload || a.Payload || a.details || a.Details || {},
+          approvals: a.approvals ?? 0,
+          totalRequired: a.totalRequired ?? a.TotalRequired ?? 5,
+        }))
+        setActions(normalized)
+        console.log(`[DEBUG] Loaded ${normalized.length} actions in Approval Queue`)
+      } else {
+        toast.error(actionsRes.reason?.message || 'Failed to load actions')
+      }
     } catch (e: any) {
       toast.error(e.message)
     }
@@ -108,6 +121,7 @@ export default function PendingApprovalsPage() {
                 <tr>
                   <th>Request ID</th>
                   <th>Action Type</th>
+                  <th>Requester</th>
                   <th>Status</th>
                   <th>Details</th>
                   <th>Actions</th>
@@ -116,7 +130,7 @@ export default function PendingApprovalsPage() {
               <tbody>
                 {actions.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                       No actions pending your approval.
                     </td>
                   </tr>
@@ -138,6 +152,9 @@ export default function PendingApprovalsPage() {
                           {ACTION_MAP[action.type] || action.type}
                         </span>
                       </td>
+                      <td style={{ fontSize: 12, fontWeight: 400 }}>
+                        {userMap[action.requester] || action.requester || 'Unknown'}
+                      </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <div style={{ width: 100, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
@@ -148,13 +165,13 @@ export default function PendingApprovalsPage() {
                       </td>
                       <td style={{ fontSize: 12 }}>
                         {action.type === 'ISSUE_TDR' && (
-                          <div style={{ opacity: 0.8 }}>Doc: {action.details.docID || action.details.DocID}<br/>TDR: {action.details.tdrID || action.details.TdrID}</div>
+                          <div style={{ opacity: 0.8 }}>Doc: {action.details.docID || action.details.docID}<br/>TDR: {action.details.tdrID || action.details.tdrID}</div>
                         )}
                         {action.type === 'TRANSFER_TDR' && (
-                          <div style={{ opacity: 0.8 }}>From: {(action.details.fromOwner || action.details.FromOwner)?.slice(0,10)}...<br/>To: {(action.details.toOwner || action.details.ToOwner)?.slice(0,10)}...</div>
+                          <div style={{ opacity: 0.8 }}>From: {(action.details.fromOwner || action.details.fromOwner)?.slice(0,10)}...<br/>To: {(action.details.toOwner || action.details.toOwner)?.slice(0,10)}...</div>
                         )}
                         {action.type === 'ACCEPT_BID' && (
-                          <div style={{ opacity: 0.8 }}>TDR: {action.details.tdrID || action.details.TdrID}<br/>Price: ₹ {(action.details.price || action.details.Price || 0).toLocaleString()}</div>
+                          <div style={{ opacity: 0.8 }}>TDR: {action.details.tdrID || action.details.tdrID}<br/>Price: ₹ {(action.details.price || action.details.price || 0).toLocaleString()}</div>
                         )}
                       </td>
                       <td>

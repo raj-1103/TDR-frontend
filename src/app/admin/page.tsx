@@ -8,6 +8,7 @@ import {
   getPendingActions,
   approveAction,
   rejectAction,
+  listUsers,
 } from '@/lib/api'
 import { CheckCircle, XCircle, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -19,6 +20,7 @@ export default function AdminPage() {
   const [issues, setIssues] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
+  const [userMap, setUserMap] = useState<Record<string, string>>({}) // fabricID → name
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
@@ -32,25 +34,37 @@ export default function AdminPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const res = await getPendingActions(user?.role, user?.fabricID)
-      const raw = res.actions || res.Actions || []
-      const all = raw.map((a: any) => ({
-        id: a.actionId || a.ActionID || a.id || a.ID || '',
-        type: a.actionType || a.ActionType || a.type || a.Type || '',
-        requester: a.requestedBy || a.RequestedBy || a.requester || a.Requester || '',
-        createdAt: a.requestedAt || a.RequestedAt || a.createdAt || a.CreatedAt || '',
-        status: a.status || a.Status || '',
-        details: a.payload || a.Payload || a.details || a.Details || {},
-        approvals: a.approvals ?? 0,
-        totalRequired: a.totalRequired ?? a.TotalRequired ?? 5,
-      }))
+      const [actionsRes, usersRes] = await Promise.allSettled([
+        getPendingActions(user?.role, user?.fabricID),
+        listUsers(),
+      ])
 
-      // Since the backend now correctly filters by role/level, 
-      // we can trust the results and skip the redundant frontend filter.
-      setIssues(all.filter(a => a.type === 'ISSUE_TDR'))
-      setTransfers(all.filter(a => a.type === 'TRANSFER_TDR'))
-      
-      console.log(`[DEBUG] Loaded ${all.length} actions for role ${user?.role}`)
+      if (usersRes.status === 'fulfilled') {
+        const map: Record<string, string> = {}
+        ;(usersRes.value.users || []).forEach((u: any) => {
+          if (u.fabricID) map[u.fabricID] = u.name || u.email || u.fabricID
+        })
+        setUserMap(map)
+      }
+
+      if (actionsRes.status === 'fulfilled') {
+        const raw = actionsRes.value.actions || actionsRes.value.actions || []
+        const all = raw.map((a: any) => ({
+          id: a.actionId || a.ActionID || a.id || a.ID || '',
+          type: a.actionType || a.ActionType || a.type || a.Type || '',
+          requester: a.requestedBy || a.RequestedBy || a.requester || a.Requester || '',
+          createdAt: a.requestedAt || a.RequestedAt || a.createdAt || a.CreatedAt || '',
+          status: a.status || a.Status || '',
+          details: a.payload || a.Payload || a.details || a.Details || {},
+          approvals: a.approvals ?? 0,
+          totalRequired: a.totalRequired ?? a.TotalRequired ?? 5,
+        }))
+        setIssues(all.filter((a: any) => a.type === 'ISSUE_TDR'))
+        setTransfers(all.filter((a: any) => a.type === 'TRANSFER_TDR'))
+        console.log(`[DEBUG] Loaded ${all.length} actions for role ${user?.role}`)
+      } else {
+        toast.error(actionsRes.reason?.message || 'Failed to load actions')
+      }
     } catch (e: any) {
       toast.error(e.message)
     }
@@ -199,8 +213,8 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
-                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
-                              {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
+                            <td style={{ fontSize: 12, fontWeight: 400 }}>
+                              {userMap[req.requester] || req.requester || 'Unknown'}
                             </td>
                             <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
@@ -278,8 +292,8 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
-                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
-                              {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
+                            <td style={{ fontSize: 12, fontWeight: 400 }}>
+                              {userMap[req.requester] || req.requester || 'Unknown'}
                             </td>
                             <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>

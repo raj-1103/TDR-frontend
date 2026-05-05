@@ -8,6 +8,7 @@ export interface UserSession {
 }
 
 export interface TransferRequest {
+  typeText: string
   requestID: string
   docID: string
   tdrID: string
@@ -23,6 +24,7 @@ export interface TransferRequest {
 }
 
 export interface IssueRequest {
+  typeText: string
   requestID: string
   docID: string
   tdrID: string

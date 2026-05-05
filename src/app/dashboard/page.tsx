@@ -47,11 +47,27 @@ const STATUS_BADGE: Record<string, string> = {
 export default function DashboardPage() {
   const { user, initializing } = useAuth()
   const [docs, setDocs] = useState<MyDocument[]>([])
+
+  // Pagination & Caching
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageCache, setPageCache] = useState<Record<number, { data: MyDocument[], timestamp: number }>>({})
+  const [isFetchingPage, setIsFetchingPage] = useState(false)
+  const [displayedDocs, setDisplayedDocs] = useState<MyDocument[]>([])
+  const ITEMS_PER_PAGE = 10
+  const STALE_TIME = 5 * 60 * 1000 // 5 minutes
+
   const [transfers, setTransfers] = useState<TransferRequest[]>([])
   const [issues, setIssues] = useState<IssueRequest[]>([])
   const [listings, setListings] = useState<MarketplaceListing[]>([])
   const [myTDRs, setMyTDRs] = useState<TDRRecord[]>([])
   const [transferHistory, setTransferHistory] = useState<TransferHistoryEntry[]>([])
+
+  // Transfer History Pagination & Caching
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyPageCache, setHistoryPageCache] = useState<Record<number, { data: TransferHistoryEntry[], timestamp: number }>>({})
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false)
+  const [displayedHistory, setDisplayedHistory] = useState<TransferHistoryEntry[]>([])
+  const HISTORY_STALE_TIME = 5 * 60 * 1000 // 5 minutes
   const [adminStats, setAdminStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState<string | null>(null)
@@ -105,6 +121,91 @@ export default function DashboardPage() {
       load()
     }
   }, [user, initializing, load])
+
+  useEffect(() => {
+    if (docs.length > 0) {
+      const p1 = docs.slice(0, ITEMS_PER_PAGE)
+      setPageCache({ 1: { data: p1, timestamp: Date.now() } })
+      setDisplayedDocs(p1)
+      setCurrentPage(1)
+    } else {
+      setDisplayedDocs([])
+      setPageCache({})
+    }
+  }, [docs])
+
+  // Seed history page 1 when transferHistory loads
+  useEffect(() => {
+    if (transferHistory.length > 0) {
+      const p1 = transferHistory.slice(0, ITEMS_PER_PAGE)
+      setHistoryPageCache({ 1: { data: p1, timestamp: Date.now() } })
+      setDisplayedHistory(p1)
+      setHistoryPage(1)
+    } else {
+      setDisplayedHistory([])
+      setHistoryPageCache({})
+    }
+  }, [transferHistory])
+
+  const goToPage = async (page: number) => {
+    const cached = pageCache[page]
+    const isStale = !cached || (Date.now() - cached.timestamp > STALE_TIME)
+    
+    if (!isStale) {
+      setCurrentPage(page)
+      setDisplayedDocs(cached.data)
+      return
+    }
+
+    setCurrentPage(page)
+    setIsFetchingPage(true)
+    
+    // Use cursor: last docID of the previous page as the starting point
+    const prevPage = pageCache[page - 1]
+    const lastId = prevPage ? prevPage.data[prevPage.data.length - 1]?.docID : undefined
+    const startIdx = lastId
+      ? docs.findIndex(d => d.docID === lastId) + 1
+      : (page - 1) * ITEMS_PER_PAGE
+    const newChunk = docs.slice(startIdx, startIdx + ITEMS_PER_PAGE)
+
+    await new Promise(r => setTimeout(r, 600))
+    setPageCache(prev => ({
+      ...prev,
+      [page]: { data: newChunk, timestamp: Date.now() }
+    }))
+    setDisplayedDocs(newChunk)
+    setIsFetchingPage(false)
+  }
+
+  const goToHistoryPage = async (page: number) => {
+    const cached = historyPageCache[page]
+    const isStale = !cached || (Date.now() - cached.timestamp > HISTORY_STALE_TIME)
+
+    if (!isStale) {
+      setHistoryPage(page)
+      setDisplayedHistory(cached.data)
+      return
+    }
+
+    setHistoryPage(page)
+    setIsFetchingHistory(true)
+
+    // Use cursor: last txID of the previous page to find start index
+    const prevPage = historyPageCache[page - 1]
+    const lastTxId = prevPage ? prevPage.data[prevPage.data.length - 1]?.txID : undefined
+    const startIdx = lastTxId
+      ? transferHistory.findIndex(h => h.txID === lastTxId) + 1
+      : (page - 1) * ITEMS_PER_PAGE
+    const newChunk = transferHistory.slice(startIdx, startIdx + ITEMS_PER_PAGE)
+
+    await new Promise(r => setTimeout(r, 600))
+    setHistoryPageCache(prev => ({
+      ...prev,
+      [page]: { data: newChunk, timestamp: Date.now() }
+    }))
+    setDisplayedHistory(newChunk)
+    setIsFetchingHistory(false)
+  }
 
   if (initializing || (!user && initializing)) {
     return (
@@ -435,12 +536,18 @@ export default function DashboardPage() {
       )}
 
       {/* Transfer History */}
-      {transferHistory.length > 0 && (
+      {(displayedHistory.length > 0 || transferHistory.length > 0) && (
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ArrowLeftRight size={13} color="#a78bfa" /> TDR Transfer History ({transferHistory.length})
+            <ArrowLeftRight size={13} color="#a78bfa" /> TDR Transfer History
+            <span style={{ fontWeight: 500, fontSize: 12 }}>({transferHistory.length} total)</span>
           </div>
-          <div className="glass-card" style={{ overflowX: 'auto' }}>
+          <div className="glass-card" style={{ overflowX: 'auto', position: 'relative' }}>
+            {isFetchingHistory && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, backdropFilter: 'blur(1px)', borderRadius: 16 }}>
+                <RefreshCw size={28} className="animate-spin" color="#a78bfa" />
+              </div>
+            )}
             <table className="tdr-table">
               <thead>
                 <tr>
@@ -453,8 +560,8 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {transferHistory.map((h, i) => (
-                  <tr key={i}>
+                {displayedHistory.map((h, i) => (
+                  <tr key={h.txID || i}>
                     <td>
                       <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#7c3aed', fontWeight: 700 }}>
                         {h.tdrID}
@@ -492,6 +599,36 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* History Pagination Controls */}
+            {transferHistory.length > ITEMS_PER_PAGE && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.4)' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Showing {(historyPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(historyPage * ITEMS_PER_PAGE, transferHistory.length)} of {transferHistory.length}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    className="btn-primary"
+                    onClick={() => goToHistoryPage(historyPage - 1)}
+                    disabled={historyPage === 1 || isFetchingHistory}
+                    style={{ padding: '6px 12px', fontSize: 13 }}
+                  >
+                    Previous
+                  </button>
+                  <span style={{ fontSize: 13, fontWeight: 600, padding: '0 8px' }}>
+                    Page {historyPage} of {Math.ceil(transferHistory.length / ITEMS_PER_PAGE)}
+                  </span>
+                  <button
+                    className="btn-primary"
+                    onClick={() => goToHistoryPage(historyPage + 1)}
+                    disabled={historyPage === Math.ceil(transferHistory.length / ITEMS_PER_PAGE) || isFetchingHistory}
+                    style={{ padding: '6px 12px', fontSize: 13 }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -509,7 +646,12 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="glass-card" style={{ overflowX: 'auto' }}>
+          <div className="glass-card" style={{ overflowX: 'auto', position: 'relative' }}>
+            {isFetchingPage && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, backdropFilter: 'blur(1px)', borderRadius: 16 }}>
+                <RefreshCw size={28} className="animate-spin" color="var(--navy-400)" />
+              </div>
+            )}
             <table className="tdr-table">
               <thead>
                 <tr>
@@ -520,7 +662,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {docs.map(doc => (
+                {displayedDocs.map(doc => (
                   <tr key={doc.docID}>
                     <td>
                       <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>{doc.docID}</code>
@@ -568,6 +710,36 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+            
+            {/* Pagination Controls */}
+            {docs.length > ITEMS_PER_PAGE && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.4)' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, docs.length)} of {docs.length}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => goToPage(currentPage - 1)} 
+                    disabled={currentPage === 1 || isFetchingPage}
+                    style={{ padding: '6px 12px', fontSize: 13 }}
+                  >
+                    Previous
+                  </button>
+                  <span style={{ fontSize: 13, fontWeight: 600, padding: '0 8px' }}>
+                    Page {currentPage} of {Math.ceil(docs.length / ITEMS_PER_PAGE)}
+                  </span>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => goToPage(currentPage + 1)} 
+                    disabled={currentPage === Math.ceil(docs.length / ITEMS_PER_PAGE) || isFetchingPage}
+                    style={{ padding: '6px 12px', fontSize: 13 }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
