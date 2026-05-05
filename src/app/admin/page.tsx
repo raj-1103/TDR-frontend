@@ -199,7 +199,7 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
-                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
+                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-dark)' }}>
                               {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
                             </td>
                             <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
@@ -278,7 +278,7 @@ export default function AdminPage() {
                                 <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
                               </div>
                             </td>
-                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-700)' }}>
+                            <td style={{ fontSize: 12, fontWeight: 500, color: 'var(--navy-dark)' }}>
                               {req.requester ? (req.requester.includes('@') ? req.requester : `${req.requester.slice(0, 12)}...`) : 'Unknown'}
                             </td>
                             <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
