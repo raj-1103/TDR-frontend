@@ -35,7 +35,12 @@ export default function Sidebar({ isOpen, onToggle }: { isOpen: boolean, onToggl
         overflow: 'hidden', 
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         opacity: isOpen ? 1 : 0,
-        backgroundColor: '#11233d'
+        backgroundColor: '#11233d',
+        height: '100%',
+        overflowY: 'auto',
+        position: 'sticky',
+        top: 0,
+        flexShrink: 0,
       }}
     >
       {/* Sidebar Header */}
