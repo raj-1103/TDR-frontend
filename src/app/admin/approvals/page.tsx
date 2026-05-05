@@ -153,7 +153,7 @@ export default function PendingApprovalsPage() {
                         </span>
                       </td>
                       <td style={{ fontSize: 12, fontWeight: 400 }}>
-                        {userMap[action.requester] || action.requester || 'Unknown'}
+                        {userMap[action.requester] || (action.requester ? `${action.requester.slice(0, 12)}...` : 'Unknown')}
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
