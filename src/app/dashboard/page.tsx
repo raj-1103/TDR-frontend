@@ -2,6 +2,7 @@
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { useEffect, useState, useCallback } from 'react'
+import { Card, CardBody } from '@/components/Card'
 import { 
   getMyRequests, 
   getMyDocuments, 
@@ -364,7 +365,7 @@ export default function DashboardPage() {
             Dashboard Overview
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4, fontWeight: 500 }}>
-            Welcome back, <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{user?.name || 'Officer'}</span>. {user.role} Role Active.
+            Welcome back, <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{(user?.name && user.name !== 'Authorized User') ? user.name : user?.email || 'Officer'}</span>. {user.role} Role Active.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -375,20 +376,22 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, marginBottom: 32 }}>
+      {/* Stats summary */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 32 }}>
         {stats.map(({ label, value, color, icon: Icon }) => (
-          <div key={label} className="glass-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 48, height: 48, background: `${color}10`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon size={24} color={color} />
+          <Card key={label} hoverable>
+            <CardBody className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div style={{ width: 52, height: 52, background: `${color}10`, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}20` }}>
+                  <Icon size={24} color={color} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-display)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{value}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{label}</div>
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{value}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700 }}>{label}</div>
-              </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         ))}
       </div>
 
@@ -396,32 +399,18 @@ export default function DashboardPage() {
       <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
         Quick Actions
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
         {quickLinks.map(({ href, icon: Icon, title, desc, color }) => (
           <Link key={href} href={href} style={{ textDecoration: 'none' }}>
-            <div className="animate-in" style={{ 
-                padding: '24px 18px', 
-                background: '#11233d', 
-                borderRadius: 16,
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-                cursor: 'pointer',
-                color: '#ffffff'
-              }}
-              onMouseEnter={e => { 
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-              }}
-              onMouseLeave={e => { 
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-              }}
-            >
-              <div style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Icon size={20} color="#ffffff" />
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, letterSpacing: '-0.01em' }}>{title}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, fontWeight: 500 }}>{desc}</div>
-            </div>
+            <Card hoverable className="h-full border-slate-200">
+              <CardBody>
+                <div style={{ width: 44, height: 44, background: `${color}10`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, border: `1px solid ${color}20` }}>
+                  <Icon size={20} color={color} />
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: 'var(--text-primary)' }}>{title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, fontWeight: 500 }}>{desc}</div>
+              </CardBody>
+            </Card>
           </Link>
         ))}
       </div>

@@ -166,7 +166,7 @@ export default function BulkUploadPage() {
                 {files.map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderBottom: i < files.length - 1 ? '1px solid var(--border)' : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                      <FileText size={14} color="var(--text-secondary)" shrink={0} />
+                      <FileText size={14} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
                       <span style={{ fontSize: 13, color: 'var(--navy-700)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{f.name}</span>
                       <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{(f.size / 1024).toFixed(1)} KB</span>
                     </div>

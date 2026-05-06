@@ -3,16 +3,15 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-
-
 import {
   getPendingActions,
   approveAction,
   rejectAction,
   listUsers,
 } from '@/lib/api'
-import { CheckCircle, XCircle, RefreshCw, ShieldCheck, AlertCircle, Eye } from 'lucide-react'
+import { CheckCircle, XCircle, RefreshCw, ShieldCheck, Eye, ArrowLeftRight, Clock } from 'lucide-react'
 import { toast } from 'sonner'
+import { Card, CardBody } from '@/components/Card'
 
 export default function AdminPage() {
   const { user } = useAuth()
@@ -29,8 +28,6 @@ export default function AdminPage() {
     if (!authorityRoles.includes(user.role)) { router.push('/dashboard'); return }
     load()
   }, [user])
-
-
 
   const load = async () => {
     setLoading(true)
@@ -49,7 +46,7 @@ export default function AdminPage() {
       }
 
       if (actionsRes.status === 'fulfilled') {
-        const raw = actionsRes.value.actions || actionsRes.value.actions || []
+        const raw = actionsRes.value.actions || []
         const all = raw.map((a: any) => ({
           id: a.actionId || a.ActionID || a.id || a.ID || '',
           type: a.actionType || a.ActionType || a.type || a.Type || '',
@@ -62,7 +59,6 @@ export default function AdminPage() {
         }))
         setIssues(all.filter((a: any) => a.type === 'ISSUE_TDR'))
         setTransfers(all.filter((a: any) => a.type === 'TRANSFER_TDR'))
-        console.log(`[DEBUG] Loaded ${all.length} actions for role ${user?.role}`)
       } else {
         toast.error(actionsRes.reason?.message || 'Failed to load actions')
       }
@@ -117,240 +113,254 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
       <main>
-
-
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32, flexWrap: 'wrap', gap: 20 }}>
           <div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              <Link href="/dashboard" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Dashboard</Link> › Admin Panel
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <Link href="/dashboard" style={{ color: '#94a3b8', textDecoration: 'none' }} className="hover:text-blue-500">Dashboard</Link>
+              <span className="mx-2 opacity-50">/</span>
+              Governance Panel
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Admin Panel</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-              Review and resolve pending TDR issue and transfer requests.
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 900, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.02em' }}>Administrative Oversight</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
+              Review and authorize pending TDR lifecycle operations across the decentralized ledger.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--emerald)', fontWeight: 600 }}>
-              <ShieldCheck size={14} /> {user?.role}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, background: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 900, padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(16,185,129,0.2)', textTransform: 'uppercase' }}>
+              <ShieldCheck size={14} /> Authority: {user?.role}
             </div>
-            <button className="btn-ghost" onClick={load} disabled={loading}>
-              <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-              Refresh
+            <button className="btn-ghost" onClick={load} disabled={loading} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, height: 38, padding: '0 14px', fontSize: 13, fontWeight: 700 }}>
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              Synchronize
             </button>
             {user?.role === 'SUPERADMIN' && (
-              <Link href="/admin/users" className="btn-primary" style={{ fontSize: 13, padding: '8px 16px' }}>
-                Manage Users
+              <Link href="/admin/users" className="btn-primary" style={{ fontSize: 13, height: 38, padding: '0 16px', borderRadius: 12, fontWeight: 800, boxShadow: '0 4px 12px rgba(37,99,235,0.15)' }}>
+                User Registry
               </Link>
             )}
           </div>
         </div>
 
         {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 40 }}>
           {[
-            { label: 'Pending Issue Requests', value: issues.length, color: '#f59e0b' },
-            { label: 'Pending Transfer Requests', value: transfers.length, color: '#3b82f6' },
-            { label: 'Total Pending', value: issues.length + transfers.length, color: '#a78bfa' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="glass-card" style={{ padding: '16px 20px' }}>
-              <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-display)', color }}>{value}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{label}</div>
-            </div>
+            { label: 'Pending Issuance', value: issues.length, color: '#f59e0b', icon: <CheckCircle size={20} /> },
+            { label: 'Pending Transfers', value: transfers.length, color: '#2563eb', icon: <ArrowLeftRight size={20} /> },
+            { label: 'System Queue', value: issues.length + transfers.length, color: '#7c3aed', icon: <Clock size={20} /> },
+          ].map(({ label, value, color, icon }) => (
+            <Card key={label} hoverable className="border-slate-200">
+              <CardBody className="p-6 flex items-center justify-between">
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 32, fontWeight: 900, fontFamily: 'var(--font-display)', color: '#0f172a', lineHeight: 1 }}>{value}</div>
+                </div>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: `${color}10`, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {icon}
+                </div>
+              </CardBody>
+            </Card>
           ))}
         </div>
 
         {loading ? (
-          <div style={{ color: 'var(--text-secondary)', fontSize: 14, padding: '40px 0', textAlign: 'center' }}>
-            Loading requests from blockchain…
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            <RefreshCw size={32} className="animate-spin mx-auto mb-4 text-blue-500 opacity-20" />
+            Querying Blockchain Consensus...
           </div>
         ) : (
-          <>
+          <div className="space-y-12">
             {/* Issue Requests */}
-            <section style={{ marginBottom: 36 }}>
-              <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircle size={14} color="#f59e0b" />
-                Pending TDR Issue Requests ({issues.length})
-              </h2>
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  Asset Issuance Queue ({issues.length})
+                </h2>
+              </div>
 
               {issues.length === 0 ? (
-                <div className="glass-card" style={{ padding: '28px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 14 }}>
-                  ✅ No pending issue requests
-                </div>
+                <Card className="p-16 text-center border-dashed border-2 border-slate-200 bg-slate-50/50">
+                  <CheckCircle size={48} className="mx-auto mb-4 text-slate-300" />
+                  <p style={{ color: '#64748b', fontSize: 14, fontWeight: 600 }}>No pending issuance requests found in the ledger.</p>
+                </Card>
               ) : (
-                <div className="glass-card" style={{ overflowX: 'auto' }}>
-                  <table className="tdr-table" style={{ minWidth: 700 }}>
-                    <thead>
-                      <tr>
-                        <th>Request ID</th>
-                        <th>Doc ID</th>
-                        <th>TDR ID</th>
-                        <th>Status (Signatures)</th>
-                        <th>Requester</th>
-                        <th>Area</th>
-                        <th>Requested</th>
-                        <th>Preview</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {issues.map(req => (
-                        <tr key={req.id}>
-                          <td>
-                            <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>
-                              {(req.id || '').slice(0, 12)}...
-                            </code>
-                          </td>
-                          <td>
-                            <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{req.details?.docID || req.details?.DocID}</code>
-                          </td>
-                          <td style={{ fontWeight: 500 }}>{req.details?.tdrID || req.details?.TdrID}</td>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'var(--emerald)' }} />
-                              </div>
-                              <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
-                            </div>
-                          </td>
-                          <td style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
-                            {userMap[req.requester] || (req.requester ? `${req.requester.slice(0, 12)}...` : 'Unknown')}
-                          </td>
-                          <td>{(req.details?.area || req.details?.Area || 0).toLocaleString()} sq m</td>
-                          <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
-                          <td>
-                            <button 
-                              className="btn-ghost" 
-                              title="Preview"
-                              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${req.details?.docID || req.details?.DocID}`, '_blank')}
-                              style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
-                            >
-                              <Eye size={18} />
-                            </button>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button
-                                className="btn-success"
-                                onClick={() => handleApproveIssue(req.id)}
-                                disabled={acting === req.id}
-                              >
-                                <CheckCircle size={12} />
-                                {acting === req.id ? '…' : 'Approve'}
-                              </button>
-                              <button
-                                className="btn-danger"
-                                onClick={() => handleRejectIssue(req.id)}
-                                disabled={acting === req.id}
-                              >
-                                <XCircle size={12} />
-                                Reject
-                              </button>
-                            </div>
-                          </td>
+                <Card className="border-slate-200 overflow-hidden shadow-xl shadow-slate-200/40">
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="tdr-table w-full">
+                      <thead>
+                        <tr>
+                          <th>Authority Identifier</th>
+                          <th>TDR Asset ID</th>
+                          <th>Consensus Progress</th>
+                          <th>Applicant</th>
+                          <th>Asset Area</th>
+                          <th>Timestamp</th>
+                          <th>Verify</th>
+                          <th style={{ textAlign: 'right' }}>Authorization</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {issues.map(req => (
+                          <tr key={req.id}>
+                            <td>
+                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#64748b', background: '#f8fafc', padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                                {(req.id || '').slice(0, 12)}
+                              </code>
+                            </td>
+                            <td style={{ fontWeight: 800, color: '#0f172a' }}>{req.details?.tdrID || req.details?.TdrID}</td>
+                            <td>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div style={{ width: 100, height: 6, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                  <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #34d399)', boxShadow: '0 0 10px rgba(16,185,129,0.3)' }} />
+                                </div>
+                                <span style={{ fontSize: 10, color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>{req.approvals} / {req.totalRequired} Signatures</span>
+                              </div>
+                            </td>
+                            <td style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200">
+                                  {(userMap[req.requester] || 'U').charAt(0)}
+                                </div>
+                                {userMap[req.requester] || (req.requester ? `${req.requester.slice(0, 8)}...` : 'Unknown')}
+                              </div>
+                            </td>
+                            <td style={{ fontWeight: 600 }}>{(req.details?.area || req.details?.Area || 0).toLocaleString()} <span className="text-[10px] text-slate-400 font-bold uppercase ml-0.5">m²</span></td>
+                            <td style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                            <td>
+                              <button 
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors border-none bg-transparent cursor-pointer"
+                                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${req.details?.docID || req.details?.DocID}`, '_blank')}
+                                title="Verify Document PDF"
+                              >
+                                <Eye size={18} />
+                              </button>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button
+                                  className="btn-success"
+                                  style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 800 }}
+                                  onClick={() => handleApproveIssue(req.id)}
+                                  disabled={acting === req.id}
+                                >
+                                  {acting === req.id ? 'Wait...' : 'Approve'}
+                                </button>
+                                <button
+                                  className="btn-danger"
+                                  style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, background: 'transparent', border: '1px solid #fee2e2', color: '#ef4444' }}
+                                  onClick={() => handleRejectIssue(req.id)}
+                                  disabled={acting === req.id}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               )}
             </section>
 
             {/* Transfer Requests */}
             <section>
-              <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircle size={14} color="#3b82f6" />
-                Pending Transfer Requests ({transfers.length})
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  Ownership Transfer Queue ({transfers.length})
+                </h2>
+              </div>
 
               {transfers.length === 0 ? (
-                <div className="glass-card" style={{ padding: '28px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 14 }}>
-                  ✅ No pending transfer requests
-                </div>
+                <Card className="p-16 text-center border-dashed border-2 border-slate-200 bg-slate-50/50">
+                  <ArrowLeftRight size={48} className="mx-auto mb-4 text-slate-300" />
+                  <p style={{ color: '#64748b', fontSize: 14, fontWeight: 600 }}>No pending transfer requests in the authorization pool.</p>
+                </Card>
               ) : (
-                <div className="glass-card" style={{ overflowX: 'auto' }}>
-                  <table className="tdr-table" style={{ minWidth: 700 }}>
-                    <thead>
-                        <tr>
-                          <th>Request ID</th>
-                          <th>TDR ID</th>
-                          <th>Doc ID</th>
-                          <th>Status (Progress)</th>
-                          <th>Requester</th>
-                          <th>To (New Owner)</th>
-                          <th>Requested</th>
-                          <th>Preview</th>
-                          <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                      {transfers.map(req => (
-                        <tr key={req.id}>
-                          <td>
-                            <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>
-                              {(req.id || '').slice(0, 12)}...
-                            </code>
-                          </td>
-                          <td style={{ fontWeight: 500 }}>{req.details?.tdrID || req.details?.TdrID}</td>
-                          <td>
-                            <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{req.details?.docID || req.details?.DocID}</code>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'var(--emerald)' }} />
+                <Card className="border-slate-200 overflow-hidden shadow-xl shadow-slate-200/40">
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="tdr-table w-full">
+                      <thead>
+                          <tr>
+                            <th>Authority Identifier</th>
+                            <th>TDR Asset ID</th>
+                            <th>Consensus Progress</th>
+                            <th>Current Owner</th>
+                            <th>Recipient</th>
+                            <th>Timestamp</th>
+                            <th>Verify</th>
+                            <th style={{ textAlign: 'right' }}>Authorization</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                        {transfers.map(req => (
+                          <tr key={req.id}>
+                            <td>
+                              <code style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#64748b', background: '#f8fafc', padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                                {(req.id || '').slice(0, 12)}
+                              </code>
+                            </td>
+                            <td style={{ fontWeight: 800, color: '#0f172a' }}>{req.details?.tdrID || req.details?.TdrID}</td>
+                            <td>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div style={{ width: 100, height: 6, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                  <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', boxShadow: '0 0 10px rgba(59,130,246,0.3)' }} />
+                                </div>
+                                <span style={{ fontSize: 10, color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>{req.approvals} / {req.totalRequired} Signatures</span>
                               </div>
-                              <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{req.approvals}/{req.totalRequired} Signatures</span>
-                            </div>
-                          </td>
-                          <td style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy-700)' }}>
-                            {userMap[req.requester] || (req.requester ? `${req.requester.slice(0, 12)}...` : 'Unknown')}
-                          </td>
-                          <td style={{ fontSize: 12 }}>{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 16)}...</td>
-                          <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(req.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</td>
-                          <td>
-                            <button 
-                              className="btn-ghost" 
-                              title="Preview"
-                              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${req.details?.docID || req.details?.DocID}`, '_blank')}
-                              style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
-                            >
-                              <Eye size={18} />
-                            </button>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button
-                                className="btn-success"
-                                onClick={() => handleApproveTransfer(req.id)}
-                                disabled={acting === req.id}
+                            </td>
+                            <td style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                              {userMap[req.requester] || (req.requester ? `${req.requester.slice(0, 8)}...` : 'Unknown')}
+                            </td>
+                            <td style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>
+                              <code className="bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{(req.details?.toOwner || req.details?.ToOwner || '').slice(0, 10)}...</code>
+                            </td>
+                            <td style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                            <td>
+                              <button 
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors border-none bg-transparent cursor-pointer"
+                                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${req.details?.docID || req.details?.DocID}`, '_blank')}
+                                title="Verify Document PDF"
                               >
-                                <CheckCircle size={12} />
-                                {acting === req.id ? '…' : 'Approve'}
+                                <Eye size={18} />
                               </button>
-                              <button
-                                className="btn-danger"
-                                onClick={() => handleRejectTransfer(req.id)}
-                                disabled={acting === req.id}
-                              >
-                                <XCircle size={12} />
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button
+                                  className="btn-success"
+                                  style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 800 }}
+                                  onClick={() => handleApproveTransfer(req.id)}
+                                  disabled={acting === req.id}
+                                >
+                                  {acting === req.id ? 'Wait...' : 'Approve'}
+                                </button>
+                                <button
+                                  className="btn-danger"
+                                  style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, background: 'transparent', border: '1px solid #fee2e2', color: '#ef4444' }}
+                                  onClick={() => handleRejectTransfer(req.id)}
+                                  disabled={acting === req.id}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               )}
             </section>
-          </>
+          </div>
         )}
       </main>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

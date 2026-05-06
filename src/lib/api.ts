@@ -113,7 +113,7 @@ export interface BidDetail {
   tdrID: string
   bidderID: string
   amount: number
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN'
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'AWAITING_BUYER_CONFIRMATION'
   placedAt: string
   message: string
   actionID?: string
@@ -199,6 +199,9 @@ export const register = (body: { email: string; name: string; password: string; 
 
 export const userLogin = (body: { email: string; password: string }) =>
   req<UserSession>('/user-login', { method: 'POST', body: JSON.stringify(body) })
+
+export const adminRegister = (body: { email: string; name: string; password: string; inviteCode: string }) =>
+  req<{ message: string }>('/admin-register', { method: 'POST', body: JSON.stringify(body) })
 
 // ── Auth: Admin separate login (password-based) ────────────
 
@@ -383,6 +386,11 @@ export const listForSale = (fabricID: string, tdrID: string, askingPrice: number
 
 export const acceptBid = (fabricID: string, bidID: string) =>
   req<{ message: string }>('/marketplace/accept-bid', {
+    method: 'POST', body: JSON.stringify({ fabricID, bidID })
+  })
+
+export const rejectBid = (fabricID: string, bidID: string) =>
+  req<{ message: string }>('/marketplace/reject-bid', {
     method: 'POST', body: JSON.stringify({ fabricID, bidID })
   })
 

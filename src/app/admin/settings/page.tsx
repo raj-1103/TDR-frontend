@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 
 import { changePassword } from '@/lib/api'
-import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react'
+import { validatePassword } from '@/lib/validation'
+import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ShieldCheck, Info } from 'lucide-react'
 
 const PasswordField = ({
-  label, value, showKey, show, setShow, onChange
+  label, value, showKey, show, setShow, onChange, hasInfo
 }: {
   label: string
   value: string
@@ -16,11 +17,36 @@ const PasswordField = ({
   show: Record<string, boolean>
   setShow: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
   onChange: (v: string) => void
+  hasInfo?: boolean
 }) => (
   <div>
-    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-      {label}
-    </label>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {label}
+      </label>
+      {hasInfo && (
+        <div className="group" style={{ position: 'relative', cursor: 'pointer' }}>
+          <Info size={12} color="var(--navy-400)" />
+          <div className="rules-tooltip" style={{
+            position: 'absolute', bottom: '100%', right: 0, marginBottom: 8,
+            width: 200, padding: 12, background: 'white', borderRadius: 8,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
+            zIndex: 10, visibility: 'hidden', opacity: 0, transition: 'all 0.2s',
+            fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6, textAlign: 'left',
+            textTransform: 'none', letterSpacing: 'normal'
+          }}>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Password Rules:</div>
+            <ul style={{ paddingLeft: 14, margin: 0 }}>
+              <li>Min 8 characters</li>
+              <li>At least 1 uppercase letter</li>
+              <li>At least 1 number</li>
+              <li>At least 1 special character</li>
+            </ul>
+          </div>
+          <style>{`.group:hover .rules-tooltip { visibility: visible !important; opacity: 1 !important; transform: translateY(-4px); }`}</style>
+        </div>
+      )}
+    </div>
     <div style={{ position: 'relative' }}>
       <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
       <input
@@ -61,10 +87,13 @@ export default function AdminSettingsPage() {
       setError('New passwords do not match')
       return
     }
-    if (form.newPass.length < 8) {
-      setError('New password must be at least 8 characters')
+
+    const validation = validatePassword(form.newPass)
+    if (!validation.isValid) {
+      setError(validation.message)
       return
     }
+
     if (form.newPass === form.current) {
       setError('New password must be different from current password')
       return
@@ -170,6 +199,7 @@ export default function AdminSettingsPage() {
                   show={show}
                   setShow={setShow}
                   onChange={v => setForm(f => ({ ...f, newPass: v }))}
+                  hasInfo={true}
                 />
 
                 {/* Strength meter */}

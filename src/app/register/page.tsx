@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { register, sendOTP, verifyOTP } from '@/lib/api'
-import { Shield, Mail, User, AlertCircle, ArrowRight, Lock, RefreshCw, CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { validatePassword } from '@/lib/validation'
+import { Shield, Mail, User, AlertCircle, ArrowRight, Lock, RefreshCw, CheckCircle, Eye, EyeOff, Info } from 'lucide-react'
 
 export default function RegisterPage() {
   const { setUser } = useAuth()
@@ -27,6 +28,13 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    const validation = validatePassword(form.password)
+    if (!validation.isValid) {
+      setError(validation.message)
+      return
+    }
+
     setLoading(true)
     try {
       await register({ email: form.email, name: form.name, password: form.password, org: form.org })
@@ -153,7 +161,28 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Password</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
+                  <div className="group" style={{ position: 'relative', cursor: 'pointer' }}>
+                    <Info size={12} color="var(--navy-400)" />
+                    <div className="rules-tooltip" style={{
+                      position: 'absolute', bottom: '100%', right: 0, marginBottom: 8,
+                      width: 200, padding: 12, background: 'white', borderRadius: 8,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
+                      zIndex: 10, visibility: 'hidden', opacity: 0, transition: 'all 0.2s',
+                      fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6
+                    }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Password Rules:</div>
+                      <ul style={{ paddingLeft: 14, margin: 0 }}>
+                        <li>Min 8 characters</li>
+                        <li>At least 1 uppercase</li>
+                        <li>At least 1 number</li>
+                        <li>At least 1 special char</li>
+                      </ul>
+                    </div>
+                    <style>{`.group:hover .rules-tooltip { visibility: visible !important; opacity: 1 !important; transform: translateY(-4px); }`}</style>
+                  </div>
+                </div>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                   <input
@@ -172,6 +201,9 @@ export default function RegisterPage() {
                   >
                     {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Min 8 chars, 1 uppercase, 1 number, 1 special char.
                 </div>
               </div>
 

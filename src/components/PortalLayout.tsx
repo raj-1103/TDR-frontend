@@ -17,12 +17,21 @@ export default function PortalLayout({ children, publicOnly = false }: { childre
   if (!user && !publicOnly) return null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-page)' }}>
       <Navbar sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
         {user && <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />}
-        <main style={{ flex: 1, padding: '32px', overflowY: 'auto', transition: 'all 0.3s ease' }}>
-          {children}
+        <main style={{ 
+          flex: 1, 
+          padding: '32px 24px', 
+          maxWidth: '1600px', 
+          margin: '0 auto', 
+          width: '100%',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+        }}>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {children}
+          </div>
         </main>
       </div>
     </div>

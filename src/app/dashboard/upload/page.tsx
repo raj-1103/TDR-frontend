@@ -2,8 +2,9 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { uploadDocument } from '@/lib/api'
-import { Upload, FileText, CheckCircle, Copy, AlertCircle, X } from 'lucide-react'
+import { Upload, FileText, CheckCircle, Copy, AlertCircle, X, RefreshCw, Shield } from 'lucide-react'
 import { toast } from 'sonner'
+import { Card, CardBody } from '@/components/Card'
 
 export default function UploadPage() {
   const { user } = useAuth()
@@ -55,100 +56,131 @@ export default function UploadPage() {
   }
 
   return (
-    <div style={{ maxWidth: 640 }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Upload TDR Document</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Upload your TDR PDF. It will be hashed using Keccak-256 and stored immutably on Hyperledger Fabric.</p>
+    <div style={{ maxWidth: 680 }}>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 900, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.02em' }}>Upload TDR Asset</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, lineHeight: 1.6 }}>
+          Submit your TDR certificate for digital verification. Your document is hashed using <span className="font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded text-xs font-bold uppercase">Keccak-256</span> and recorded immutably on the ledger.
+        </p>
       </div>
 
       {result ? (
-        <div className="glass-card animate-in" style={{ padding: 32, textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <CheckCircle size={28} color="#34d399" />
-          </div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Document Uploaded!</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 24 }}>Your document is now recorded on the blockchain.</p>
+        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl shadow-slate-200/50">
+          <CardBody className="p-10 text-center">
+            <div style={{ width: 64, height: 64, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 8px 16px -4px rgba(16,185,129,0.2)' }}>
+              <CheckCircle size={32} color="#10b981" />
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 900, color: '#0f172a', marginBottom: 8, letterSpacing: '-0.01em' }}>Submission Successful!</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 32, fontWeight: 500 }}>Your digital TDR asset has been anchored to the blockchain ledger.</p>
 
-          {[
-            { label: 'Document ID', value: result.docID },
-            { label: 'Transaction ID', value: result.txID },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 10, textAlign: 'left' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--navy-400)', wordBreak: 'break-all' }}>{value}</code>
-                <button onClick={() => copy(value, label)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copiedId === label ? '#34d399' : 'var(--text-secondary)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500 }}>
-                  {copiedId === label ? <><CheckCircle size={13} /> Copied!</> : <Copy size={13} />}
-                </button>
+            <div className="space-y-3 mb-8">
+              {[
+                { label: 'Asset Identifier', value: result.docID },
+                { label: 'Blockchain TXID', value: result.txID },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', textAlign: 'left' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#0f172a', wordBreak: 'break-all', fontWeight: 600 }}>{value}</code>
+                    <button onClick={() => copy(value, label)} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', color: copiedId === label ? '#10b981' : '#64748b', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, padding: '6px 10px', transition: 'all 0.2s' }} className="hover:border-blue-500/30">
+                      {copiedId === label ? <><CheckCircle size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)', borderRadius: 12, padding: '14px 18px', fontSize: 13, color: '#d97706', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 12, fontWeight: 600 }}>
+              <AlertCircle size={18} className="flex-shrink-0" />
+              <div className="text-left">Save your Asset ID — it is required for all future transfers and issuance requests.</div>
+            </div>
+
+            <button className="btn-primary" onClick={() => setResult(null)} style={{ justifyContent: 'center', height: 52, borderRadius: 14, width: '100%', fontSize: 15, fontWeight: 900, boxShadow: '0 8px 16px -4px rgba(37,99,235,0.2)' }}>
+              <Upload size={18} className="mr-2" /> Upload New Certificate
+            </button>
+          </CardBody>
+        </Card>
+      ) : (
+        <Card className="border-slate-200">
+          <CardBody className="p-8">
+            {/* Drop zone */}
+            <div
+              onDragOver={e => { e.preventDefault(); setDrag(true) }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={handleDrop}
+              onClick={() => fileRef.current?.click()}
+              style={{
+                border: `2px dashed ${drag ? '#2563eb' : file ? '#10b981' : '#e2e8f0'}`,
+                borderRadius: 20,
+                padding: '56px 24px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: drag ? 'rgba(37,99,235,0.02)' : file ? 'rgba(16,185,129,0.02)' : '#fbfcfd',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                marginBottom: 24,
+                boxShadow: drag ? '0 0 0 4px rgba(37,99,235,0.05)' : 'none'
+              }}
+              className="group"
+            >
+              <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+
+              {file ? (
+                <div className="animate-in zoom-in-95 duration-200">
+                  <div style={{ width: 64, height: 64, background: '#ecfdf5', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1px solid #d1fae5' }}>
+                    <FileText size={32} color="#10b981" />
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>{file.name}</div>
+                  <div style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>{(file.size / 1024).toFixed(1)} KB</div>
+                  <button
+                    onClick={e => { e.stopPropagation(); setFile(null) }}
+                    style={{ marginTop: 16, background: 'white', border: '1px solid #fee2e2', cursor: 'pointer', color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 10 }}
+                    className="hover:bg-red-50 hover:border-red-200 transition-colors"
+                  >
+                    <X size={14} /> Remove File
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div style={{ width: 64, height: 64, background: '#f1f5f9', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: '1px solid #e2e8f0' }} className="group-hover:scale-110 transition-transform group-hover:bg-blue-50 group-hover:border-blue-200 group-hover:text-blue-600">
+                    <Upload size={32} className="text-slate-400 group-hover:text-blue-500" />
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Drag and drop certificate</div>
+                  <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>PDF, PNG, JPG accepted · Max 10MB</div>
+                </div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 20px', fontSize: 13, color: '#475569', marginBottom: 28, lineHeight: 1.6 }}>
+              <div className="flex gap-3">
+                <Shield size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <p>
+                  Security Protocol: Your file will be hashed locally and submitted to the blockchain network. 
+                  The original file is stored for OCR validation. Scanned certificates are fully supported.
+                </p>
               </div>
             </div>
-          ))}
 
-          <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#fbbf24', marginTop: 8, marginBottom: 20 }}>
-            ⚠️ Save your Document ID — you'll need it to request TDR issuance.
-          </div>
-
-          <button className="btn-primary" onClick={() => setResult(null)} style={{ justifyContent: 'center' }}>
-            <Upload size={15} /> Upload Another
-          </button>
-        </div>
-      ) : (
-        <div className="glass-card" style={{ padding: 32 }}>
-          {/* Drop zone */}
-          <div
-            onDragOver={e => { e.preventDefault(); setDrag(true) }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={handleDrop}
-            onClick={() => fileRef.current?.click()}
-            style={{
-              border: `2px dashed ${drag ? 'rgba(37,99,235,0.6)' : file ? 'rgba(5,150,105,0.4)' : 'var(--border)'}`,
-              borderRadius: 12,
-              padding: '40px 24px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              background: drag ? 'rgba(37,99,235,0.03)' : file ? 'rgba(5,150,105,0.02)' : 'transparent',
-              transition: 'all 0.2s',
-              marginBottom: 20,
-            }}
-          >
-            <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
-
-            {file ? (
-              <div>
-                <FileText size={36} color="#34d399" style={{ margin: '0 auto 12px' }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#34d399', marginBottom: 4 }}>{file.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{(file.size / 1024).toFixed(1)} KB</div>
-                <button
-                  onClick={e => { e.stopPropagation(); setFile(null) }}
-                  style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', color: '#f87171', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12 }}
-                >
-                  <X size={13} /> Remove
-                </button>
-              </div>
-            ) : (
-              <div>
-                <Upload size={36} color="var(--text-secondary)" style={{ margin: '0 auto 12px' }} />
-                <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Drop your file here, or click to browse</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>PDF, PNG, JPG accepted · Max 10MB</div>
+            {error && (
+              <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#ef4444', marginBottom: 20, fontWeight: 600 }}>
+                <AlertCircle size={16} /> {error}
               </div>
             )}
-          </div>
 
-          {/* Info */}
-          <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '12px 16px', fontSize: 12, color: 'var(--navy-accent)', marginBottom: 20, lineHeight: 1.6 }}>
-            📌 Your file will be hashed (Keccak-256) and submitted to Hyperledger Fabric via the <code>UploadDocument</code> chaincode function. The original file is stored server-side for OCR during transfers. PNG/JPG scans of TDR certificates are fully supported.
-          </div>
-
-          {error && (
-            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#f87171', marginBottom: 16 }}>
-              <AlertCircle size={14} /> {error}
-            </div>
-          )}
-
-          <button className="btn-primary" onClick={handleSubmit} disabled={!file || loading} style={{ justifyContent: 'center', width: '100%', padding: '12px' }}>
-            {loading ? '⏳ Uploading to Blockchain…' : <><Upload size={15} /> Upload Document</>}
-          </button>
-        </div>
+            <button className="btn-primary" onClick={handleSubmit} disabled={!file || loading} style={{ justifyContent: 'center', width: '100%', height: 56, borderRadius: 16, fontSize: 16, fontWeight: 900, boxShadow: '0 10px 20px -5px rgba(37,99,235,0.3)' }}>
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <RefreshCw size={20} className="animate-spin opacity-50" />
+                  Anchoring to Blockchain...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Upload size={20} /> Securely Upload Document
+                </span>
+              )}
+            </button>
+          </CardBody>
+        </Card>
       )}
     </div>
   )

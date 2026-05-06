@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { adminRegister } from '@/lib/api'
-import { ShieldCheck, Mail, Lock, User, Key, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { validatePassword } from '@/lib/validation'
+import { ShieldCheck, Mail, Lock, User, Key, Eye, EyeOff, AlertCircle, CheckCircle, Info } from 'lucide-react'
 
 export default function AdminRegisterPage() {
   const router = useRouter()
@@ -20,10 +21,13 @@ export default function AdminRegisterPage() {
       setError('Passwords do not match')
       return
     }
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters')
+    
+    const validation = validatePassword(form.password)
+    if (!validation.isValid) {
+      setError(validation.message)
       return
     }
+
     setLoading(true)
     try {
       await adminRegister({
@@ -90,13 +94,37 @@ export default function AdminRegisterPage() {
             ))}
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Password</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
+                <div className="group" style={{ position: 'relative', cursor: 'pointer' }}>
+                  <Info size={12} color="var(--navy-400)" />
+                  <div className="rules-tooltip" style={{
+                    position: 'absolute', bottom: '100%', right: 0, marginBottom: 8,
+                    width: 200, padding: 12, background: 'white', borderRadius: 8,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
+                    zIndex: 10, visibility: 'hidden', opacity: 0, transition: 'all 0.2s',
+                    fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6, textAlign: 'left'
+                  }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Password Rules:</div>
+                    <ul style={{ paddingLeft: 14, margin: 0 }}>
+                      <li>Min 8 characters</li>
+                      <li>At least 1 uppercase letter</li>
+                      <li>At least 1 number</li>
+                      <li>At least 1 special character</li>
+                    </ul>
+                  </div>
+                  <style>{`.group:hover .rules-tooltip { visibility: visible !important; opacity: 1 !important; transform: translateY(-4px); }`}</style>
+                </div>
+              </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                 <input type={show ? 'text' : 'password'} className="tdr-input" style={{ paddingLeft: 34, paddingRight: 40 }} placeholder="Min 8 characters" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
                 <button type="button" onClick={() => setShow(!show)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                   {show ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                Min 8 chars, 1 uppercase, 1 number, 1 special char.
               </div>
             </div>
 
