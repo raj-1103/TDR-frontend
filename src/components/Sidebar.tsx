@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import {
   LayoutDashboard, Upload, UploadCloud, ArrowLeftRight,
   CheckCircle, ShieldCheck, Users, FileSearch, LogOut,
-  Clock, Settings, Menu, ShoppingBag, ListChecks, ChevronRight, X
+  Clock, Settings, Menu, ShoppingBag, ListChecks, ChevronRight, X, List
 } from 'lucide-react'
 
 const authorityRoles = ['ADMIN', 'SUPERADMIN', 'JUNIOR', 'ASSISTANT', 'TDO', 'CITY', 'COMMISSIONER']
@@ -22,6 +22,7 @@ const navItems = [
   { href: '/admin/approvals', label: 'Approval Queue', icon: ListChecks, roles: authorityRoles },
   { href: '/admin/users', label: 'User Management', icon: Users, roles: ['ADMIN', 'SUPERADMIN'] },
   { href: '/admin/bulk-upload', label: 'Bulk Processing', icon: UploadCloud, roles: ['ADMIN', 'SUPERADMIN'] },
+  { href: '/admin/logs', label: 'Activity Logs', icon: List, roles: ['SUPERADMIN'] },
   { href: '/admin/settings', label: 'Portal Settings', icon: Settings, roles: [...authorityRoles, 'USER'] },
 ]
 
