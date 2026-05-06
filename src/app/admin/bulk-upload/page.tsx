@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { uploadDocument } from '@/lib/api'
+import { bulkUploadFiles } from '@/lib/api'
 import { UploadCloud, CheckCircle, AlertCircle, FileText, X } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -49,27 +49,31 @@ export default function BulkUploadPage() {
     setError('')
     setResults([])
 
-    const currentResults: any[] = []
+    try {
+      const res = await bulkUploadFiles(user.fabricID, files)
 
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i]
-      try {
-        const res = await uploadDocument(user.fabricID, f)
-        currentResults.push({ name: f.name, docID: res.docID, txID: res.txID, success: true })
-      } catch (err: any) {
-        currentResults.push({ name: f.name, success: false, error: err.message || 'Upload failed' })
+      // Map backend results to the same shape the UI already expects
+      const currentResults = res.results.map(r => ({
+        name:    r.fileName,
+        docID:   r.docID   || '',
+        txID:    res.txID,           // all files share the same single tx
+        success: !r.error,
+        error:   r.error,
+      }))
+
+      setResults(currentResults)
+      setFiles([])
+
+      if (res.succeeded === res.total) {
+        toast.success(`Successfully uploaded ${res.succeeded} documents in 1 transaction!`)
+      } else {
+        toast.warning(`Uploaded ${res.succeeded}/${res.total} documents. Check details below.`)
       }
-    }
-
-    setResults(currentResults)
-    setFiles([])
-    setLoading(false)
-    
-    const successCount = currentResults.filter(r => r.success).length
-    if (successCount === files.length) {
-      toast.success(`Successfully uploaded ${successCount} documents!`)
-    } else {
-      toast.warning(`Uploaded ${successCount}/${files.length} documents. Check details.`)
+    } catch (err: any) {
+      setError(err.message || 'Bulk upload failed')
+      toast.error(err.message || 'Upload failed')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -183,7 +187,7 @@ export default function BulkUploadPage() {
           )}
 
           <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '12px 16px', fontSize: 12, color: 'var(--navy-accent)', marginBottom: 20, lineHeight: 1.6 }}>
-            📌 Your files will be uploaded sequentially. The original files will be stored server-side and hashed on Hyperledger Fabric.
+            📌 Your files will be uploaded in a single batch. The original files will be stored server-side and anchored to Hyperledger Fabric in one transaction.
           </div>
 
           {error && (

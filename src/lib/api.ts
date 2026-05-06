@@ -119,6 +119,16 @@ export interface BidDetail {
   actionID?: string
 }
 
+export interface ActivityLog {
+  actorId: string
+  actorName: string
+  role: string
+  action: string
+  targetId: string
+  details: string
+  createdAt: string
+}
+
 export const getBidsForListing = (listingID: string) =>
   req<{ bids: BidDetail[] }>(`/marketplace/bids?listingID=${encodeURIComponent(listingID)}`)
 
@@ -237,6 +247,28 @@ export const bulkUploadDocuments = (body: { fabricID: string, documents: { docId
   req<{ message: string; txID: string; count: number; documents: { docId: string; hash: string }[] }>('/bulk-upload', {
     method: 'POST', body: JSON.stringify(body)
   })
+
+// ADD this new function below uploadDocument
+export const bulkUploadFiles = async (fabricID: string, files: File[]) => {
+  const form = new FormData()
+  form.append('fabricID', fabricID)
+  for (const file of files) {
+    form.append('files', file) // same key 'files' for all
+  }
+  const res = await fetch(`${API}/bulk-upload-files`, {
+    method: 'POST',
+    body: form,
+    headers: API.includes('loca.lt') ? { 'Bypass-Tunnel-Reminder': 'true' } : undefined
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json() as Promise<{
+    txID: string
+    total: number
+    succeeded: number
+    failed: number
+    results: { docID: string; fileName: string; hash: string; filePath: string; error?: string }[]
+  }>
+}
 
 export const verifyDocument = (docID: string) =>
   req<VerifyResult>(`/verify?docID=${docID}`)
@@ -408,6 +440,9 @@ export const rejectAction = (adminFabricID: string, actionID: string, reason: st
   req<{ message: string }>('/reject-action', {
     method: 'POST', body: JSON.stringify({ adminFabricID, actionID, reason })
   })
+
+export const getActivityLogs = () =>
+  req<{ logs: ActivityLog[] }>('/activity-logs')
 
 export const getAdminStats = () =>
   req<{
