@@ -166,24 +166,37 @@ export default function PendingApprovalsPage() {
                       </td>
                       <td style={{ fontSize: 12 }}>
                         {action.type === 'ISSUE_TDR' && (
-                          <div style={{ opacity: 0.8 }}>Doc: {action.details.docID || action.details.docID}<br />TDR: {action.details.tdrID || action.details.tdrID}</div>
+                          <div style={{ opacity: 0.8 }}>
+                            Doc: {action.details.docID}<br />
+                            TDR: {action.details.tdrID}
+                          </div>
                         )}
                         {action.type === 'TRANSFER_TDR' && (
-                          <div style={{ opacity: 0.8 }}>From: {(action.details.fromOwner || action.details.fromOwner)?.slice(0, 10)}...<br />To: {(action.details.toOwner || action.details.toOwner)?.slice(0, 10)}...</div>
+                          <div style={{ opacity: 0.8 }}>
+                            From: {(action.details.fabricID && userMap[action.details.fabricID]) || action.details.fabricID?.slice(0, 10)}...<br />
+                            To: {(action.details.newOwner && userMap[action.details.newOwner]) || action.details.newOwner?.slice(0, 10)}...
+                          </div>
                         )}
                         {action.type === 'ACCEPT_BID' && (
-                          <div style={{ opacity: 0.8 }}>TDR: {action.details.tdrID || action.details.tdrID}<br />Price: ₹ {(action.details.price || action.details.price || 0).toLocaleString()}</div>
+                          <div style={{ opacity: 0.8 }}>
+                            TDR: {action.details.tdrID}<br />
+                            Price: ₹ {(action.details.price || 0).toLocaleString()}
+                          </div>
                         )}
                       </td>
                       <td>
-                        <button
-                          className="btn-ghost"
-                          title="Preview Document"
-                          onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${action.details.docID}`, '_blank')}
-                          style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
-                        >
-                          <Eye size={18} />
-                        </button>
+                        {action.details.docID ? (
+                          <button
+                            className="btn-ghost"
+                            title="Preview Document"
+                            onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${action.details.docID}`, '_blank')}
+                            style={{ padding: '6px', borderRadius: '6px', color: 'var(--navy-400)' }}
+                          >
+                            <Eye size={18} />
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>N/A</span>
+                        )}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>

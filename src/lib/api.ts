@@ -79,6 +79,8 @@ export interface PendingAction {
     tdrID?: string
     fromOwner?: string
     toOwner?: string
+    fabricID?: string // for Transfer/Bid
+    newOwner?: string // for Transfer
     price?: number
     amount?: number
   }
