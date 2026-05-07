@@ -402,7 +402,7 @@ export default function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
         {quickLinks.map(({ href, icon: Icon, title, desc, color }) => (
           <Link key={href} href={href} style={{ textDecoration: 'none' }}>
-            <Card hoverable className="h-full border-slate-200">
+            <Card hoverable className="h-full border-slate-300">
               <CardBody>
                 <div style={{ width: 44, height: 44, background: `${color}10`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, border: `1px solid ${color}20` }}>
                   <Icon size={20} color={color} />

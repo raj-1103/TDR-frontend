@@ -151,7 +151,7 @@ export default function AdminPage() {
             { label: 'Pending Transfers', value: transfers.length, color: '#2563eb', icon: <ArrowLeftRight size={20} /> },
             { label: 'System Queue', value: issues.length + transfers.length, color: '#7c3aed', icon: <Clock size={20} /> },
           ].map(({ label, value, color, icon }) => (
-            <Card key={label} hoverable className="border-slate-200">
+            <Card key={label} hoverable className="border-slate-300">
               <CardBody className="p-6 flex items-center justify-between">
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{label}</div>
@@ -182,12 +182,12 @@ export default function AdminPage() {
               </div>
 
               {issues.length === 0 ? (
-                <Card className="p-16 text-center border-dashed border-2 border-slate-200 bg-slate-50/50">
+                <Card className="p-16 text-center border-dashed border-2 border-slate-300 bg-slate-50/50">
                   <CheckCircle size={48} className="mx-auto mb-4 text-slate-300" />
                   <p style={{ color: '#64748b', fontSize: 14, fontWeight: 600 }}>No pending issuance requests found in the ledger.</p>
                 </Card>
               ) : (
-                <Card className="border-slate-200 overflow-hidden shadow-xl shadow-slate-200/40">
+                <Card className="border-slate-300 overflow-hidden shadow-xl shadow-slate-200/40">
                   <div style={{ overflowX: 'auto' }}>
                     <table className="tdr-table w-full">
                       <thead>
@@ -213,7 +213,7 @@ export default function AdminPage() {
                             <td style={{ fontWeight: 800, color: '#0f172a' }}>{req.details?.tdrID || req.details?.TdrID}</td>
                             <td>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <div style={{ width: 100, height: 6, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                <div style={{ width: 100, height: 6, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden', border: '1px solid #cbd5e1' }}>
                                   <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #34d399)', boxShadow: '0 0 10px rgba(16,185,129,0.3)' }} />
                                 </div>
                                 <span style={{ fontSize: 10, color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>{req.approvals} / {req.totalRequired} Signatures</span>
@@ -308,7 +308,7 @@ export default function AdminPage() {
                             <td style={{ fontWeight: 800, color: '#0f172a' }}>{req.details?.tdrID || req.details?.TdrID}</td>
                             <td>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <div style={{ width: 100, height: 6, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                <div style={{ width: 100, height: 6, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden', border: '1px solid #cbd5e1' }}>
                                   <div style={{ width: `${(req.approvals / req.totalRequired) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', boxShadow: '0 0 10px rgba(59,130,246,0.3)' }} />
                                 </div>
                                 <span style={{ fontSize: 10, color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>{req.approvals} / {req.totalRequired} Signatures</span>

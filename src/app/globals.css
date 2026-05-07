@@ -19,9 +19,9 @@
   --navy-400: #3b82f6;       /* Links and active states */
   --navy-hover: #1e3a5f;
   
-  --bg-page: #f8fafc;        /* Subtle gray/blue background */
+  --bg-page: #f1f5f9;        /* More distinct gray background */
   --bg-card: #ffffff;
-  --border: #e2e8f0;
+  --border: #cbd5e1;         /* More visible border */
   
   --text-primary: #1e293b;   /* Almost black */
   --text-secondary: #64748b; /* Slate gray */

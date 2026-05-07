@@ -20,9 +20,9 @@ export function Card({
   const baseStyles = 'rounded-2xl transition-all duration-300 overflow-hidden'
   
   const variants = {
-    default: 'bg-white border border-slate-200 shadow-sm shadow-slate-200/50',
-    glass: 'bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-slate-200/40',
-    outline: 'bg-transparent border-2 border-slate-200 hover:border-blue-500/30',
+    default: 'bg-white border border-slate-300 shadow-sm shadow-slate-200/50',
+    glass: 'bg-white/70 backdrop-blur-md border border-slate-300 shadow-xl shadow-slate-200/40',
+    outline: 'bg-transparent border-2 border-slate-300 hover:border-blue-500/30',
     flat: 'bg-slate-50 border-none'
   }
 
