@@ -1,9 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import { requestTransfer, lookupFabricID } from '@/lib/api'
-import { ArrowLeftRight, AlertCircle, CheckCircle, Copy, Info, Mail, Search } from 'lucide-react'
+import { requestTransfer, lookupFabricID, getMyRequests, IssueRequest } from '@/lib/api'
+import { ArrowLeftRight, AlertCircle, CheckCircle, Copy, Info, Mail, Search, Lock, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function TransferPage() {
@@ -17,6 +17,26 @@ export default function TransferPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
+  const [checkingRequests, setCheckingRequests] = useState(true)
+  const [pendingIssue, setPendingIssue] = useState<IssueRequest | null>(null)
+
+  // Check for pending issue requests on mount
+  useEffect(() => {
+    if (!user) return
+    const check = async () => {
+      try {
+        const res = await getMyRequests(user.fabricID)
+        // Find if there's any TDR issuance still in progress
+        const pending = res.issueRequests?.find(r => r.status === 'PENDING')
+        if (pending) setPendingIssue(pending)
+      } catch (e) {
+        console.error('Failed to check requests', e)
+      } finally {
+        setCheckingRequests(false)
+      }
+    }
+    check()
+  }, [user])
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -89,7 +109,44 @@ export default function TransferPage() {
         </p>
       </div>
 
-      {result ? (
+      {checkingRequests ? (
+        <div className="glass-card" style={{ padding: 48, textAlign: 'center' }}>
+          <Clock size={32} className="animate-spin" style={{ color: 'var(--navy-400)', marginBottom: 16, opacity: 0.5 }} />
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Verifying issuance status...</p>
+        </div>
+      ) : pendingIssue ? (
+        <div className="glass-card animate-in" style={{ padding: 40, textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <Lock size={30} color="#f59e0b" />
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, marginBottom: 10, color: 'var(--navy-hero)' }}>Transfer Page Locked</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, maxWidth: 380, margin: '0 auto 24px' }}>
+            You have a TDR issuance request <code style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{pendingIssue.requestID.slice(0, 8)}...</code> currently pending approval. 
+            <br /><br />
+            <strong>New transfer requests are disabled</strong> until your pending issuance is fully approved by the authorities. This ensures ledger consistency.
+          </p>
+          
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', marginBottom: 24, textAlign: 'left' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8 }}>Current Status</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 8, height: 8, background: '#f59e0b', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Awaiting Authority Approval ({pendingIssue.approvals || 0}/{pendingIssue.totalRequired || 5})</span>
+            </div>
+          </div>
+
+          <Link href="/dashboard" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex' }}>
+            Return to Dashboard
+          </Link>
+          
+          <style>{`
+            @keyframes pulse {
+              0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+              70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+              100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+            }
+          `}</style>
+        </div>
+      ) : result ? (
         <div className="glass-card animate-in" style={{ padding: 32 }}>
           <div style={{ width: 52, height: 52, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
             <CheckCircle size={26} color="#34d399" />

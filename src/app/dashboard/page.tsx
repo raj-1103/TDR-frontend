@@ -21,7 +21,7 @@ import {
   TDRRecord,
   TransferHistoryEntry
 } from '@/lib/api'
-import { Upload, ArrowLeftRight, CheckCircle, FileSearch, Clock, Copy, Bell, Download, FileText, RefreshCw, AlertCircle, XCircle, ShieldCheck, TrendingUp, FileUp, Repeat, ShoppingBag, Gavel, Tag } from 'lucide-react'
+import { Upload, ArrowLeftRight, CheckCircle, FileSearch, Clock, Copy, Bell, Download, FileText, RefreshCw, AlertCircle, XCircle, ShieldCheck, TrendingUp, FileUp, Repeat, ShoppingBag, Gavel, Tag, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -693,6 +693,13 @@ export default function DashboardPage() {
                             <Clock size={11} /> History
                           </button>
                         </Link>
+                        <button 
+                          className="btn-ghost" 
+                          style={{ fontSize: 11, padding: '5px 10px' }}
+                          onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${doc.docID}`, '_blank')}
+                        >
+                          <Eye size={11} /> Preview
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -742,7 +749,7 @@ export default function DashboardPage() {
           <div className="glass-card" style={{ overflowX: 'auto' }}>
             <table className="tdr-table">
               <thead>
-                <tr><th>Type</th><th>ID</th><th>Status</th><th>Approval Progress</th><th>Actions</th></tr>
+                <tr><th>Type</th><th>ID</th><th>Status</th><th>Approval Progress</th><th>Verify</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {issues.map(r => (
@@ -766,6 +773,15 @@ export default function DashboardPage() {
                           <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvals}/{r.totalRequired || 5}</span>
                         </div>
                       ) : <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>-</span>}
+                    </td>
+                    <td>
+                      <button 
+                        className="btn-ghost" 
+                        style={{ fontSize: 11, padding: '5px 10px' }}
+                        onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${r.docID}`, '_blank')}
+                      >
+                        <Eye size={11} /> Preview
+                      </button>
                     </td>
                     <td>
                       {r.status === 'REJECTED' && r.reason && (
@@ -795,6 +811,15 @@ export default function DashboardPage() {
                           <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvals}/{r.totalRequired || 5}</span>
                         </div>
                       ) : <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>-</span>}
+                    </td>
+                    <td>
+                      <button 
+                        className="btn-ghost" 
+                        style={{ fontSize: 11, padding: '5px 10px' }}
+                        onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${r.docID}`, '_blank')}
+                      >
+                        <Eye size={11} /> Preview
+                      </button>
                     </td>
                     <td>
                       {r.status === 'APPROVED' && (
