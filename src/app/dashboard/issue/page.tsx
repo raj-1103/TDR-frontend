@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 
 export default function IssuePage() {
   const { user } = useAuth()
-  const [form, setForm] = useState({ docID: '', tdrID: '', area: '' })
+  const [form, setForm] = useState({ docID: '', area: '' })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
@@ -16,13 +16,15 @@ export default function IssuePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    const parsedArea = Number(form.area)
+    if (!form.docID.trim()) { setError('Document ID is required'); return }
+    if (!Number.isInteger(parsedArea) || parsedArea < 1) { setError('Area must be a whole number greater than 0'); return }
     setLoading(true)
     try {
       const res = await requestIssueTDR({
         fabricID: user!.fabricID,
-        docID: form.docID,
-        tdrID: form.tdrID,
-        area: parseInt(form.area),
+        docID: form.docID.trim(),
+        area: parsedArea,
       })
       setResult(res)
     } catch (err: any) {
@@ -64,9 +66,23 @@ export default function IssuePage() {
             <span className="badge badge-pending">PENDING APPROVAL</span>
           </div>
 
+          {/* Assigned TDR ID — highlighted prominently */}
+          {result.tdrID && (
+            <div style={{ background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assigned TDR ID</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <code style={{ fontSize: 14, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--navy-accent)', wordBreak: 'break-all' }}>{result.tdrID}</code>
+                <button onClick={() => copy(result.tdrID)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                  <Copy size={13} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {[
-            { label: 'Request ID', value: result.requestID },
-            { label: 'Transaction ID', value: result.txID },
+            { label: 'Action ID', value: result.actionID },
+            ...(result.requestID ? [{ label: 'Request ID', value: result.requestID }] : []),
+            ...(result.txID      ? [{ label: 'Transaction ID', value: result.txID }]   : []),
           ].map(({ label, value }) => (
             <div key={label} style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
@@ -83,7 +99,7 @@ export default function IssuePage() {
             ℹ️ An admin will review your request. Once approved, the TDR will be minted on the Fabric blockchain and linked to your document.
           </div>
 
-          <button className="btn-ghost" onClick={() => { setResult(null); setForm({ docID: '', tdrID: '', area: '' }) }}>
+          <button className="btn-ghost" onClick={() => { setResult(null); setForm({ docID: '', area: '' }) }}>
             Submit Another Request
           </button>
         </div>
@@ -93,7 +109,7 @@ export default function IssuePage() {
           <div style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.1)', borderRadius: 8, padding: '12px 14px', fontSize: 12, color: 'var(--navy-accent)', marginBottom: 22, display: 'flex', gap: 10, lineHeight: 1.6 }}>
             <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>
-              Make sure you have already uploaded the document and noted its <strong>Document ID</strong>. The TDR ID must be unique — choose a meaningful identifier like <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--navy-400)' }}>TDRID-2026-001</code>.
+              Make sure you have already uploaded the document and noted its <strong>Document ID</strong>. A unique TDR ID will be <strong>auto-assigned</strong> by the system upon submission.
             </span>
           </div>
 
@@ -114,18 +130,7 @@ export default function IssuePage() {
               </div>
             </div>
 
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                TDR ID (unique) <span style={{ color: '#f87171' }}>*</span>
-              </label>
-              <input
-                className="tdr-input"
-                placeholder="TDRID-2026-001"
-                value={form.tdrID}
-                onChange={e => setForm({ ...form, tdrID: e.target.value })}
-                required
-              />
-            </div>
+
 
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>

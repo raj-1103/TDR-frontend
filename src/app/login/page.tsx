@@ -110,9 +110,6 @@ export default function LoginPage() {
           <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', marginTop: 24 }}>
             No account? <Link href="/register" style={{ color: 'var(--navy-400)', textDecoration: 'none', fontWeight: 700 }}>Register here</Link>
           </p>
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', marginTop: 12 }}>
-            Admin? <Link href="/admin-login" style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>Admin Portal →</Link>
-          </p>
         </div>
       </div>
     </div>

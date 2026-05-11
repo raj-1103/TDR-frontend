@@ -19,7 +19,6 @@ const navItems = [
   { href: '/history', label: 'Activity History', icon: Clock, roles: [...authorityRoles, 'USER'] },
   { href: '/verify', label: 'Verify Audit', icon: FileSearch, roles: [...authorityRoles, 'USER'] },
   { href: '/admin', label: 'Admin Control', icon: ShieldCheck, roles: authorityRoles },
-  { href: '/admin/approvals', label: 'Approval Queue', icon: ListChecks, roles: authorityRoles },
   { href: '/admin/users', label: 'User Management', icon: Users, roles: ['ADMIN', 'SUPERADMIN'] },
   { href: '/admin/bulk-upload', label: 'Bulk Processing', icon: UploadCloud, roles: ['ADMIN', 'SUPERADMIN'] },
   { href: '/admin/logs', label: 'Activity Logs', icon: List, roles: ['SUPERADMIN'] },
@@ -43,12 +42,12 @@ export default function Sidebar({ isOpen, onToggle }: { isOpen: boolean, onToggl
 
       <aside
         onClick={(e) => e.stopPropagation()}
-        className={`fixed lg:sticky top-0 lg:top-[73px] left-0 bottom-0 z-[150] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-r border-slate-800 flex flex-col ${isOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full lg:w-[80px] lg:translate-x-0'
+        className={`fixed lg:sticky top-0 left-0 bottom-0 z-[150] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-r border-slate-800 flex flex-col ${isOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full lg:w-[80px] lg:translate-x-0'
           }`}
         style={{
           background: '#0f172a',
-          height: 'calc(100vh - 73px)',
-          minHeight: 'calc(100vh - 73px)'
+          height: '100vh',
+          minHeight: '100vh'
         }}
       >
         <div className="flex flex-col h-full overflow-hidden">
@@ -110,7 +109,7 @@ export default function Sidebar({ isOpen, onToggle }: { isOpen: boolean, onToggl
                     {(user?.name && user.name !== 'Authorized User') ? user.name[0].toUpperCase() : user?.email?.[0].toUpperCase() || 'U'}
                   </div>
                   <div className="flex flex-col text-left overflow-hidden">
-                    <span className="text-sm font-black text-white truncate leading-tight">{user?.name}</span>
+                    <span className="text-sm font-black text-white truncate leading-tight">{(user?.name && user.name !== 'Authorized User') ? user.name : user?.email?.split('@')[0] || 'Officer'}</span>
                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Role: {user?.role}</span>
                   </div>
                 </div>

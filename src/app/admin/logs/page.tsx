@@ -60,7 +60,7 @@ export default function AdminLogsPage() {
       toast.error(e.message)
     }
     setLoading(false)
-  }
+  };
 
   const fetchGraph = async () => {
     if (!docIDInput.trim()) return
@@ -75,17 +75,17 @@ export default function AdminLogsPage() {
     } finally {
       setGraphLoading(false)
     }
-  }
+  };
 
   const getNodeLabel = (nodes: MutationNode[], id: string) =>
-    nodes.find(n => n.id === id)?.label || id
+    nodes.find(n => n.id === id)?.label || id;
 
   const getActionColor = (action: string) => {
     if (action.includes('APPROVE')) return 'var(--emerald)'
     if (action.includes('REJECT')) return 'var(--red)'
     if (action.includes('CREATE') || action.includes('UPLOAD')) return 'var(--navy-400)'
     return 'var(--text-secondary)'
-  }
+  };
 
   const getRoleBadgeColor = (role: string) => {
     const map: Record<string, string> = {
@@ -95,11 +95,11 @@ export default function AdminLogsPage() {
       SUPERADMIN: '#ef4444',
     }
     return map[role] || '#6b7280'
-  }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-      <main>
+      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div>
@@ -178,7 +178,17 @@ export default function AdminLogsPage() {
                       </td>
                     </tr>
                   ) : (
-                    logs.map((log, i) => (
+                    logs.map((l: any, i) => {
+                      const log = {
+                        createdAt: l.createdAt || l.CreatedAt,
+                        actorName: l.actorName || l.ActorName || 'Unknown',
+                        actorId: l.actorId || l.ActorId || '',
+                        role: l.role || l.Role || '',
+                        action: l.action || l.Action || '',
+                        targetId: l.targetId || l.TargetId || '',
+                        details: l.details || l.Details || '',
+                      }
+                      return (
                       <tr key={i}>
                         <td style={{ fontSize: 12, color: 'var(--text-secondary)', width: 40 }}>
                           {i + 1}
@@ -186,18 +196,18 @@ export default function AdminLogsPage() {
                         <td style={{ whiteSpace: 'nowrap', fontSize: 12, color: 'var(--text-secondary)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Clock size={12} opacity={0.6} />
-                            {new Date(log.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+                            {log.createdAt ? new Date(log.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : '—'}
                           </div>
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--navy-800)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--navy-400)' }}>
-                              {log.actorName.charAt(0).toUpperCase()}
+                              {(log.actorName || 'U').charAt(0).toUpperCase()}
                             </div>
                             <div>
                               <div style={{ fontWeight: 600, fontSize: 13 }}>{log.actorName}</div>
                               <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                                {log.actorId.slice(0, 12)}...
+                                {log.actorId?.slice(0, 12) || '---'}...
                               </div>
                             </div>
                           </div>
@@ -222,7 +232,8 @@ export default function AdminLogsPage() {
                           {log.details}
                         </td>
                       </tr>
-                    ))
+                      )
+                    })
                   )}
                 </tbody>
               </table>
@@ -243,7 +254,7 @@ export default function AdminLogsPage() {
                 style={{
                   flex: 1, padding: '10px 14px', borderRadius: 8,
                   border: '1px solid var(--border)',
-                  background: '#fff', color: 'var(--navy-700)',
+                  background: '#fff', color: 'var(--text-primary)',
                   fontSize: 14, outline: 'none',
                 }}
               />
@@ -252,7 +263,7 @@ export default function AdminLogsPage() {
                 disabled={graphLoading || !docIDInput.trim()}
                 style={{
                   padding: '10px 20px', borderRadius: 8, border: 'none',
-                  background: 'var(--navy-800)', color: '#fff',
+                  background: 'var(--navy-dark)', color: '#fff',
                   fontSize: 14, cursor: graphLoading ? 'not-allowed' : 'pointer',
                   opacity: graphLoading ? 0.7 : 1,
                   display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600,
@@ -286,7 +297,7 @@ export default function AdminLogsPage() {
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#2563eb' }}>
                     Ownership chain:
                   </span>
-                  <span style={{ fontSize: 13, color: 'var(--navy-700)', fontFamily: 'var(--font-mono)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
                     {graph.chain || 'No transfers yet'}
                   </span>
                 </div>
@@ -308,15 +319,26 @@ export default function AdminLogsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {graph.edges.length === 0 ? (
+                      {(graph?.edges?.length || 0) === 0 ? (
                         <tr>
                           <td colSpan={9} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                             No transfer history found for this document.
                           </td>
                         </tr>
                       ) : (
-                        graph.edges.map((edge, i) => (
-                          <tr key={i}>
+                        graph?.edges?.map((e: any, i) => {
+                          const edge = {
+                            source: e.source || e.Source,
+                            target: e.target || e.Target,
+                            action: e.action || e.Action,
+                            txID: e.txID || e.TxID || e.TxId,
+                            label: e.label || e.Label || e.Timestamp,
+                            approvedBy: e.approvedBy || e.ApprovedBy,
+                            approverRole: e.approverRole || e.ApproverRole,
+                            approvedAt: e.approvedAt || e.ApprovedAt,
+                          }
+                          return (
+                            <tr key={i}>
                             {/* Index */}
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center' }}>
                               {i + 1}
@@ -329,7 +351,7 @@ export default function AdminLogsPage() {
                                 borderRadius: 4, background: '#f1f5f9',
                                 color: getActionColor(edge.action),
                               }}>
-                                {edge.action.replace(/_/g, ' ')}
+                                {(edge.action || '').replace(/_/g, ' ')}
                               </span>
                             </td>
 
@@ -338,7 +360,7 @@ export default function AdminLogsPage() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <User size={12} color="var(--text-secondary)" />
                                 <span style={{ fontSize: 13, fontWeight: 500 }}>
-                                  {getNodeLabel(graph.nodes, edge.source)}
+                                  {getNodeLabel(graph?.nodes || [], edge.source)}
                                 </span>
                               </div>
                             </td>
@@ -348,7 +370,7 @@ export default function AdminLogsPage() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <ArrowRight size={12} color="var(--emerald)" />
                                 <span style={{ fontSize: 13, fontWeight: 500 }}>
-                                  {getNodeLabel(graph.nodes, edge.target)}
+                                  {getNodeLabel(graph?.nodes || [], edge.target)}
                                 </span>
                               </div>
                             </td>
@@ -410,7 +432,8 @@ export default function AdminLogsPage() {
                               </div>
                             </td>
                           </tr>
-                        ))
+                          )
+                        })
                       )}
                     </tbody>
                   </table>
@@ -421,13 +444,12 @@ export default function AdminLogsPage() {
                   <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>
                     Participants:
                   </span>
-                  {graph.nodes
-                    .filter(n => n.type === 'owner')
+                  {graph?.nodes
                     .map((node, i) => (
                       <span key={i} style={{
                         fontSize: 12, padding: '3px 10px', borderRadius: 20,
-                        background: '#f1f5f9', border: '1px solid var(--border)',
-                        color: 'var(--navy-700)',
+                        background: '#fff', border: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
                         display: 'flex', alignItems: 'center', gap: 5,
                       }}>
                         <User size={11} /> {node.label}

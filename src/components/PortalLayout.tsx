@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import Navbar from '@/components/Navbar'
 import Sidebar from '@/components/Sidebar'
 
 export default function PortalLayout({ children, publicOnly = false }: { children: React.ReactNode, publicOnly?: boolean }) {
@@ -17,23 +16,20 @@ export default function PortalLayout({ children, publicOnly = false }: { childre
   if (!user && !publicOnly) return null
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-page)' }}>
-      <Navbar sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
-        {user && <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />}
-        <main style={{ 
-          flex: 1, 
-          padding: '32px 24px', 
-          maxWidth: '1600px', 
-          margin: '0 auto', 
-          width: '100%',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
-        }}>
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {children}
-          </div>
-        </main>
-      </div>
+    <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: 'var(--bg-page)' }}>
+      {user && <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />}
+      <main style={{ 
+        flex: 1, 
+        padding: '32px 24px', 
+        maxWidth: '1600px', 
+        margin: '0 auto', 
+        width: '100%',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+      }}>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {children}
+        </div>
+      </main>
     </div>
   )
 }

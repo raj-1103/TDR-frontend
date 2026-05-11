@@ -104,12 +104,18 @@ export default function MarketplacePage() {
 
   const handlePlaceBid = async () => {
     if (!bidModal || !user || !bidAmount) return
+    const amount = Number(bidAmount)
+    if (amount < bidModal.askingPrice) {
+      toast.error(`Bid amount cannot be less than the asking price (₹${bidModal.askingPrice.toLocaleString()})`)
+      return
+    }
+
     setSubmitting(true)
     try {
       await placeBid(
         user.fabricID,
         bidModal.listingID,
-        Number(bidAmount),
+        amount,
         `Bid from ${user.name}`
       )
       toast.success('Bid placed successfully!')
@@ -164,6 +170,9 @@ export default function MarketplacePage() {
   }
 
   const handleConfirmBid = async (bid: BidDetail) => {
+    if (!window.confirm('Are you sure you want to buy this TDR asset?')) return
+    if (!window.confirm(`FINAL CONFIRMATION: You are about to pay ₹ ${bid.amount.toLocaleString()} for TDR ${bid.tdrID}. Proceed with transaction?`)) return
+    
     setConfirmingBid(bid.bidID)
     try {
       // In confirmBid, the second arg is actionID if it's a multisig action, 
@@ -216,6 +225,7 @@ export default function MarketplacePage() {
       case 'REJECTED': return { bg: '#fef2f2', color: '#ef4444' }
       case 'WITHDRAWN': return { bg: '#f1f5f9', color: '#64748b' }
       case 'AWAITING_BUYER_CONFIRMATION': return { bg: '#eff6ff', color: '#3b82f6' }
+      case 'FROZEN': return { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b' }
       default: return { bg: '#f8fafc', color: '#64748b' }
     }
   }
@@ -278,9 +288,15 @@ export default function MarketplacePage() {
                         </div>
                         <div style={{
                           fontSize: 10, fontWeight: 900, padding: '4px 12px', borderRadius: 20,
-                          background: listing.status === 'ACTIVE' ? 'rgba(16,185,129,0.1)' : 'rgba(148,163,184,0.1)',
-                          color: listing.status === 'ACTIVE' ? '#10b981' : '#94a3b8',
-                          border: listing.status === 'ACTIVE' ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(148,163,184,0.2)',
+                          background: listing.status === 'ACTIVE' ? 'rgba(16,185,129,0.1)' 
+                            : listing.status === 'FROZEN' ? 'rgba(245,158,11,0.1)'
+                            : 'rgba(148,163,184,0.1)',
+                          color: listing.status === 'ACTIVE' ? '#10b981' 
+                            : listing.status === 'FROZEN' ? '#f59e0b'
+                            : '#94a3b8',
+                          border: listing.status === 'ACTIVE' ? '1px solid rgba(16,185,129,0.2)' 
+                            : listing.status === 'FROZEN' ? '1px solid rgba(245,158,11,0.2)'
+                            : '1px solid rgba(148,163,184,0.2)',
                           textTransform: 'uppercase', letterSpacing: '0.05em'
                         }}>
                           {listing.status}
@@ -575,6 +591,19 @@ export default function MarketplacePage() {
                           <span style={{ fontSize: 16, fontWeight: 900, color: '#2563eb' }}>₹ {listing.askingPrice.toLocaleString()}</span>
                         </div>
                       </div>
+                      
+                      {/* NEW: Highest Bid Display */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ width: 36, height: 36, background: 'rgba(16,185,129,0.05)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Gavel size={18} className="text-emerald-500" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Highest Bid</span>
+                          <span style={{ fontSize: 16, fontWeight: 900, color: '#10b981' }}>
+                            {listing.highestBid && listing.highestBid > 0 ? `₹ ${listing.highestBid.toLocaleString()}` : 'No bids yet'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="mt-auto">
@@ -585,6 +614,14 @@ export default function MarketplacePage() {
                           onClick={() => toggleBids(listing.listingID)}
                         >
                           <Gavel size={16} /> Manage Bids
+                        </button>
+                      ) : listing.status === 'FROZEN' ? (
+                        <button
+                          className="btn-ghost"
+                          style={{ width: '100%', justifyContent: 'center', height: 46, borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'not-allowed', color: '#f59e0b', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)' }}
+                          disabled
+                        >
+                          <Clock size={16} /> Bid Accepted - Frozen
                         </button>
                       ) : (
                         <button
@@ -627,7 +664,12 @@ export default function MarketplacePage() {
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-6">
                   <div className="flex justify-between items-center mb-1">
                     <span style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Target Asset</span>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#2563eb', background: '#eff6ff', padding: '2px 8px', borderRadius: 20 }}>₹ {bidModal.askingPrice.toLocaleString()} Ask</span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#2563eb', background: '#eff6ff', padding: '2px 8px', borderRadius: 20 }}>₹ {bidModal.askingPrice.toLocaleString()} Ask</span>
+                      {bidModal.highestBid && bidModal.highestBid > 0 && (
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#10b981', background: '#ecfdf5', padding: '2px 8px', borderRadius: 20 }}>₹ {bidModal.highestBid.toLocaleString()} High Bid</span>
+                      )}
+                    </div>
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#0f172a' }}>{bidModal.tdrID}</div>
                 </div>

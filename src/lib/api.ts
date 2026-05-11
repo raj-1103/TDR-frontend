@@ -98,7 +98,10 @@ export interface MarketplaceListing {
   seller:      string
   sellerID:    string
   description: string
-  status:      'ACTIVE' | 'SOLD' | 'CANCELLED'
+  status:      'ACTIVE' | 'SOLD' | 'CANCELLED' | 'FROZEN'
+  highestBid?:  number
+  createdAt?:   string
+  activatedAt?: string
 }
 
 export interface Bid {
@@ -283,6 +286,12 @@ export const getHistory = (docID: string) =>
 
 export const getMutationGraph = (docID: string) =>
   req<{ docID: string; chain: string; nodes: any[]; edges: any[] }>(`/mutation-graph?docID=${docID}`)
+    .then(res => ({
+      ...res,
+      nodes: res.nodes || (res as any).Nodes || [],
+      edges: res.edges || (res as any).Edges || [],
+      chain: res.chain || (res as any).Chain || ''
+    }));
 
 export const getMyDocuments = (fabricID: string) =>
   req<{ documents: MyDocument[] }>(`/my-documents?fabricID=${encodeURIComponent(fabricID)}`)
@@ -314,8 +323,8 @@ export const downloadTransferPDF = async (docID: string, tdrID: string): Promise
 
 // ── TDR Issuance ──────────────────────────────────────────
 
-export const requestIssueTDR = (body: { fabricID: string; docID: string; tdrID: string; area: number }) =>
-  req<{ requestID: string; txID: string; status: string }>('/request-issue-tdr', {
+export const requestIssueTDR = (body: { fabricID: string; docID: string; area: number }) =>
+  req<{ actionID: string; tdrID: string; requestID?: string; txID?: string; status: string; message?: string }>('/request-issue-tdr', {
     method: 'POST', body: JSON.stringify(body)
   })
 
@@ -453,6 +462,7 @@ export const rejectAction = (adminFabricID: string, actionID: string, reason: st
 
 export const getActivityLogs = () =>
   req<{ logs: ActivityLog[] }>('/activity-logs')
+    .then(res => ({ logs: res.logs || (res as any).Logs || [] }));
 
 export const getAdminStats = () =>
   req<{

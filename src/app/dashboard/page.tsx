@@ -33,6 +33,7 @@ const STATUS_COLOR: Record<string, string> = {
   TRANSFERRED: '#a78bfa',
   ANCHORED: '#06b6d4',
   ON_SALE: '#7c3aed',
+  PENDING_SALE: '#f59e0b',
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -43,6 +44,7 @@ const STATUS_BADGE: Record<string, string> = {
   TDR_ISSUED: 'badge-approved',
   TRANSFERRED: 'badge-approved',
   ON_SALE: 'badge-approved',
+  PENDING_SALE: 'badge-pending',
 }
 
 export default function DashboardPage() {
@@ -62,12 +64,16 @@ export default function DashboardPage() {
   const [listings, setListings] = useState<MarketplaceListing[]>([])
   const [myTDRs, setMyTDRs] = useState<TDRRecord[]>([])
   const [transferHistory, setTransferHistory] = useState<TransferHistoryEntry[]>([])
+  const [myBids, setMyBids] = useState<BidDetail[]>([])
+  const [myListings, setMyListings] = useState<MarketplaceListing[]>([])
 
   // Transfer History Pagination & Caching
   const [historyPage, setHistoryPage] = useState(1)
   const [historyPageCache, setHistoryPageCache] = useState<Record<number, { data: TransferHistoryEntry[], timestamp: number }>>({})
   const [isFetchingHistory, setIsFetchingHistory] = useState(false)
   const [displayedHistory, setDisplayedHistory] = useState<TransferHistoryEntry[]>([])
+  const [activityPage, setActivityPage] = useState(1)
+  const ACTIVITY_PER_PAGE = 10
   const HISTORY_STALE_TIME = 5 * 60 * 1000 // 5 minutes
   const [adminStats, setAdminStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -99,6 +105,14 @@ export default function DashboardPage() {
       if (marketResult.status === 'fulfilled')  setListings(marketResult.value.listings || [])
       if (tdrsResult.status === 'fulfilled')    setMyTDRs(tdrsResult.value.tdrs || [])
       if (historyResult.status === 'fulfilled') setTransferHistory(historyResult.value.history || [])
+      if (marketResult.status === 'fulfilled') {
+        // We already have listings from marketResult, but we also want our specific ones
+      }
+      // Re-assign specific marketplace results
+      const bidsRes = await getMyBids(user.fabricID).catch(() => ({ bids: [] }))
+      const listsRes = await getMyListings(user.fabricID).catch(() => ({ listings: [] }))
+      setMyBids(bidsRes.bids || [])
+      setMyListings(listsRes.listings || [])
 
       // Log any non-critical failures (missing backend endpoints)
       ;[docsResult, reqsResult, marketResult, tdrsResult, historyResult].forEach((r, i) => {
@@ -341,8 +355,6 @@ export default function DashboardPage() {
       { label: 'Received via Transfer', value: transferredDocs, color: '#a78bfa', icon: Repeat },
     ]
 
-  const myListings = listings.filter(l => l.seller === user.fabricID)
-
   const getApprovalLevel = (approvals: number) => {
     const levels = ['JUNIOR', 'ASSISTANT', 'TDO', 'CITY', 'COMMISSIONER']
     if (approvals < levels.length) return `Awaiting ${levels[approvals]} Approval`
@@ -365,7 +377,7 @@ export default function DashboardPage() {
             Dashboard Overview
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4, fontWeight: 500 }}>
-            Welcome back, <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{(user?.name && user.name !== 'Authorized User') ? user.name : user?.email || 'Officer'}</span>. {user.role} Role Active.
+            Welcome back, <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{(user?.name && user.name !== 'Authorized User') ? user.name : user?.email?.split('@')[0] || 'Officer'}</span>. {user.role} Role Active.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -415,36 +427,10 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Marketplace Listings - If Seller */}
-      {myListings.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ShoppingBag size={13} /> My Marketplace Listings ({myListings.length})
-          </div>
-          <div className="glass-card" style={{ overflowX: 'auto' }}>
-            <table className="tdr-table">
-              <thead>
-                <tr><th>TDR ID</th><th>Asking Price</th><th>Status</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                {myListings.map(l => (
-                  <tr key={l.id}>
-                    <td><code style={{ fontFamily: 'var(--font-mono)' }}>{l.tdrID}</code></td>
-                    <td>₹ {l.askingPrice.toLocaleString()}</td>
-                    <td><span className={`badge ${l.status === 'ACTIVE' ? 'badge-approved' : 'badge-pending'}`}>{l.status}</span></td>
-                    <td>
-                      <Link href="/marketplace" className="btn-ghost" style={{ fontSize: 11 }}>View Bids</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
-      {/* My TDRs (owned via issuance or marketplace purchase) */}
-      {myTDRs.length > 0 && (
+
+      {/* ── COMBINED ACTIVITY TABLE below My Documents ── */}
+      {false && (
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <CheckCircle size={13} color="#10b981" /> My TDRs ({myTDRs.length})
@@ -522,10 +508,10 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
-      )}
+      )}{/* end suppressed My TDRs */}
 
-      {/* Transfer History */}
-      {(displayedHistory.length > 0 || transferHistory.length > 0) && (
+      {/* Transfer History — suppressed, merged below */}
+      {false && (
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <ArrowLeftRight size={13} color="#a78bfa" /> TDR Transfer History
@@ -681,6 +667,11 @@ export default function DashboardPage() {
                              <Tag size={11} /> Already Listed
                           </span>
                         )}
+                        {doc.status === 'PENDING_SALE' && (
+                          <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, padding: '5px 10px', background: 'rgba(245,158,11,0.1)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                             <Clock size={11} /> Awaiting Listing Approval
+                          </span>
+                        )}
                         {(doc.status === 'TDR_ISSUED' || doc.status === 'TRANSFERRED') && (
                           <Link href={`/dashboard/transfer?docID=${doc.docID}`} style={{ textDecoration: 'none' }}>
                             <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }}>
@@ -695,10 +686,11 @@ export default function DashboardPage() {
                         </Link>
                         <button 
                           className="btn-ghost" 
-                          style={{ fontSize: 11, padding: '5px 10px' }}
+                          style={{ fontSize: 11, padding: '5px 8px' }}
+                          title="Preview"
                           onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${doc.docID}`, '_blank')}
                         >
-                          <Eye size={11} /> Preview
+                          <Eye size={13} />
                         </button>
                       </div>
                     </td>
@@ -740,98 +732,203 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* My Requests & Approval Progress */}
-      {(transfers.length > 0 || issues.length > 0) && (
-        <div>
+      {/* ── UNIFIED ACTIVITY & STATUS TABLE ── */}
+      {(myTDRs.length > 0 || transferHistory.length > 0 || issues.length > 0 || transfers.length > 0 || myBids.length > 0 || myListings.length > 0) && (
+        <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock size={13} /> My Request Progress
+            <TrendingUp size={13} color="#7c3aed" /> Activity & Status
           </div>
           <div className="glass-card" style={{ overflowX: 'auto' }}>
             <table className="tdr-table">
               <thead>
-                <tr><th>Type</th><th>ID</th><th>Status</th><th>Approval Progress</th><th>Verify</th><th>Actions</th></tr>
+                <tr>
+                  <th>Activity</th>
+                  <th>TDR ID</th>
+                  <th>Status / Details</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody>
-                {issues.map(r => (
-                  <tr key={r.requestID}>
-                    <td><span style={{ fontSize: 11, color: 'var(--emerald)', fontWeight: 700 }}>{r.typeText || 'ISSUE'}</span></td>
-                    <td><code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{r.requestID.slice(0,8)}...</code></td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span className={`badge ${STATUS_BADGE[r.status] || 'badge-pending'}`}>{r.status}</span>
-                        {r.status === 'PENDING' && r.approvals !== undefined && (
-                          <span style={{ fontSize: 10, color: 'var(--navy-400)', fontWeight: 700 }}>{getApprovalLevel(r.approvals)}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      {r.status === 'PENDING' && r.approvals !== undefined ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                           <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                            <div style={{ width: `${(r.approvals / (r.totalRequired || 5)) * 100}%`, height: '100%', background: 'var(--emerald)' }} />
-                          </div>
-                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvals}/{r.totalRequired || 5}</span>
+                {(() => {
+                  // Unified Activity Generation
+                  const allItems: any[] = [
+                    ...myTDRs.map(t => ({
+                      key: `tdr-${t.tdrID}`,
+                      type: 'MY TDR',
+                      sub: 'Owned',
+                      typeBg: 'rgba(124,58,237,0.1)',
+                      typeColor: '#7c3aed',
+                      tdrID: t.tdrID,
+                      status: t.status === 'PENDING_SALE' ? 'PENDING LISTING' : t.status,
+                      statusBg: t.status === 'ACTIVE' ? 'rgba(16,185,129,0.1)' 
+                              : t.status === 'LISTED' || t.status === 'ON_SALE' ? 'rgba(124,58,237,0.1)' 
+                              : t.status === 'PENDING_SALE' ? 'rgba(245,158,11,0.1)' : 'rgba(148,163,184,0.1)',
+                      statusColor: t.status === 'ACTIVE' ? '#10b981' 
+                                 : t.status === 'LISTED' || t.status === 'ON_SALE' ? '#7c3aed' 
+                                 : t.status === 'PENDING_SALE' ? '#f59e0b' : '#94a3b8',
+                      details: t.area ? `${t.area.toLocaleString()} sq m` : '—',
+                      date: t.acquiredAt,
+                      actions: (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {t.status === 'ACTIVE' && (
+                            <button className="btn-primary" style={{ fontSize: 11, padding: '5px 10px' }}
+                              onClick={() => { const doc = docs.find(d => d.tdrID === t.tdrID); if (doc) setListModal(doc); else toast.error('Document not found for this TDR') }}>
+                              <Tag size={11} /> List for Sale
+                            </button>
+                          )}
+                          {t.status === 'PENDING_SALE' && (
+                             <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, padding: '5px 10px', background: 'rgba(245,158,11,0.1)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Clock size={11} /> Pending Approval
+                             </span>
+                          )}
+                          {(t.status === 'LISTED' || t.status === 'ON_SALE') && (
+                            <Link href="/marketplace"><button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }}><ShoppingBag size={11} /> View Listing</button></Link>
+                          )}
                         </div>
-                      ) : <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>-</span>}
-                    </td>
-                    <td>
-                      <button 
-                        className="btn-ghost" 
-                        style={{ fontSize: 11, padding: '5px 10px' }}
-                        onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${r.docID}`, '_blank')}
-                      >
-                        <Eye size={11} /> Preview
-                      </button>
-                    </td>
-                    <td>
-                      {r.status === 'REJECTED' && r.reason && (
-                        <span style={{ fontSize: 11, color: '#f87171' }}><AlertCircle size={11} /> {r.reason}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {transfers.map(r => (
-                  <tr key={r.requestID}>
-                    <td><span style={{ fontSize: 11, color: 'var(--navy-accent)', fontWeight: 700 }}>{r.typeText || 'TRANSFER'}</span></td>
-                    <td><code style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{r.requestID.slice(0,8)}...</code></td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span className={`badge ${STATUS_BADGE[r.status] || 'badge-pending'}`}>{r.status}</span>
-                        {r.status === 'PENDING' && r.approvals !== undefined && (
-                          <span style={{ fontSize: 10, color: 'var(--navy-400)', fontWeight: 700 }}>{getApprovalLevel(r.approvals)}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      {r.status === 'PENDING' && r.approvals !== undefined ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                           <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                            <div style={{ width: `${(r.approvals / (r.totalRequired || 5)) * 100}%`, height: '100%', background: 'var(--emerald)' }} />
-                          </div>
-                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvals}/{r.totalRequired || 5}</span>
+                      )
+                    })),
+                    ...transferHistory.map(h => ({
+                      key: `hist-${h.txID}`,
+                      type: 'HISTORY',
+                      sub: h.action,
+                      typeBg: 'rgba(167,139,250,0.12)',
+                      typeColor: '#a78bfa',
+                      tdrID: h.tdrID,
+                      status: h.direction === 'RECEIVED' ? '↓ RECEIVED' : '↑ SENT',
+                      statusBg: h.direction === 'RECEIVED' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                      statusColor: h.direction === 'RECEIVED' ? '#10b981' : '#f59e0b',
+                      details: (
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <code style={{ fontSize: 10 }}>{h.direction === 'RECEIVED' ? (h.sellerName || h.fromOwner?.slice(0,12)+'...') : (h.buyerName || h.toOwner?.slice(0,12)+'...')}</code>
+                          {h.soldAmount > 0 && <span style={{ fontWeight: 700 }}>₹ {h.soldAmount.toLocaleString()}</span>}
                         </div>
-                      ) : <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>-</span>}
-                    </td>
-                    <td>
-                      <button 
-                        className="btn-ghost" 
-                        style={{ fontSize: 11, padding: '5px 10px' }}
-                        onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${r.docID}`, '_blank')}
-                      >
-                        <Eye size={11} /> Preview
-                      </button>
-                    </td>
-                    <td>
-                      {r.status === 'APPROVED' && (
-                        <button className="btn-success" style={{ fontSize: 11 }} onClick={() => handleDownload(r.docID, r.tdrID)}>
-                          <Download size={11} /> PDF
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      ),
+                      date: h.timestamp,
+                      actions: '—'
+                    })),
+                    ...issues.map(r => ({
+                      key: `issue-${r.requestID}`,
+                      type: 'REQUEST',
+                      sub: r.typeText || 'TDR Issue',
+                      typeBg: 'rgba(16,185,129,0.1)',
+                      typeColor: '#10b981',
+                      tdrID: r.tdrID || '—',
+                      status: r.status,
+                      statusBg: STATUS_COLOR[r.status] + '10',
+                      statusColor: STATUS_COLOR[r.status],
+                      details: r.status === 'PENDING' ? `${r.approvals}/${r.totalRequired || 5} Approvals` : (r.reason || '—'),
+                      date: r.createdAt,
+                      actions: <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 8px' }} onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${r.docID}`, '_blank')}><Eye size={13} /></button>
+                    })),
+                    ...transfers.map(r => ({
+                      key: `tr-${r.requestID}`,
+                      type: 'REQUEST',
+                      sub: r.typeText || 'TDR Transfer',
+                      typeBg: 'rgba(59,130,246,0.1)',
+                      typeColor: '#3b82f6',
+                      tdrID: r.tdrID || '—',
+                      status: r.status,
+                      statusBg: STATUS_COLOR[r.status] + '10',
+                      statusColor: STATUS_COLOR[r.status],
+                      details: r.status === 'PENDING' ? `${r.approvals}/${r.totalRequired || 5} Approvals` : (r.reason || '—'),
+                      date: r.createdAt,
+                      actions: (
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 8px' }} onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/download-pdf?docID=${r.docID}`, '_blank')}><Eye size={13} /></button>
+                          {r.status === 'APPROVED' && <button className="btn-success" style={{ fontSize: 11, padding: '5px 8px' }} onClick={() => handleDownload(r.docID, r.tdrID)}><Download size={11} /></button>}
+                        </div>
+                      )
+                    })),
+                    ...myListings.map(l => ({
+                      key: `list-${l.listingID}`,
+                      type: 'LISTING',
+                      sub: 'Selling TDR',
+                      typeBg: 'rgba(124,58,237,0.1)',
+                      typeColor: '#7c3aed',
+                      tdrID: l.tdrID,
+                      status: l.status,
+                      statusBg: l.status === 'ACTIVE' ? 'rgba(16,185,129,0.1)' : 'rgba(148,163,184,0.1)',
+                      statusColor: l.status === 'ACTIVE' ? '#10b981' : '#94a3b8',
+                      details: `Asking: ₹ ${l.askingPrice.toLocaleString()}`,
+                      date: l.createdAt || l.activatedAt || '', 
+                      actions: <Link href="/marketplace"><button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }}><ShoppingBag size={11} /> View Bids</button></Link>
+                    })),
+                    ...myBids.map(b => ({
+                      key: `bid-${b.bidID}`,
+                      type: 'BID PLACED',
+                      sub: 'Buying TDR',
+                      typeBg: 'rgba(245,158,11,0.1)',
+                      typeColor: '#f59e0b',
+                      tdrID: b.tdrID,
+                      status: b.status.replace(/_/g, ' '),
+                      statusBg: b.status === 'ACCEPTED' || b.status === 'AWAITING_BUYER_CONFIRMATION' ? 'rgba(16,185,129,0.1)' : b.status === 'REJECTED' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                      statusColor: b.status === 'ACCEPTED' || b.status === 'AWAITING_BUYER_CONFIRMATION' ? '#10b981' : b.status === 'REJECTED' ? '#ef4444' : '#f59e0b',
+                      details: `Bid: ₹ ${b.amount.toLocaleString()}`,
+                      date: b.placedAt,
+                      actions: (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {b.status === 'AWAITING_BUYER_CONFIRMATION' && (
+                            <button className="btn-primary" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => handleConfirmPurchase(b.bidID)} disabled={acting === b.bidID}>Confirm</button>
+                          )}
+                          <Link href="/marketplace"><button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }}><Eye size={11} /> View</button></Link>
+                        </div>
+                      )
+                    }))
+                  ]
+
+                  allItems.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+                  
+                  const start = (activityPage - 1) * ACTIVITY_PER_PAGE
+                  const paginated = allItems.slice(start, start + ACTIVITY_PER_PAGE)
+
+                  if (allItems.length === 0) {
+                    return <tr><td colSpan={5} style={{ textAlign: 'center', padding: 24, color: 'var(--text-secondary)' }}>No activity found</td></tr>
+                  }
+
+                  return paginated.map(item => (
+                    <tr key={item.key}>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: item.typeBg, color: item.typeColor, width: 'fit-content' }}>{item.type}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>{item.sub}</span>
+                        </div>
+                      </td>
+                      <td><code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#7c3aed', fontWeight: 700 }}>{item.tdrID}</code></td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, width: 'fit-content', background: item.statusBg, color: item.statusColor }}>{item.status}</span>
+                          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.details}</div>
+                        </div>
+                      </td>
+                      <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        {item.date ? new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      </td>
+                      <td>{item.actions}</td>
+                    </tr>
+                  ))
+                })()}
               </tbody>
             </table>
+
+            {/* Activity Pagination Controls */}
+            {(() => {
+              const totalItems = myTDRs.length + transferHistory.length + issues.length + transfers.length + myListings.length + myBids.length
+              if (totalItems <= ACTIVITY_PER_PAGE) return null
+              const totalPages = Math.ceil(totalItems / ACTIVITY_PER_PAGE)
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.4)' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    Showing {(activityPage - 1) * ACTIVITY_PER_PAGE + 1} - {Math.min(activityPage * ACTIVITY_PER_PAGE, totalItems)} of {totalItems}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button className="btn-primary" onClick={() => setActivityPage(p => Math.max(1, p - 1))} disabled={activityPage === 1} style={{ padding: '6px 12px', fontSize: 13 }}>Previous</button>
+                    <span style={{ fontSize: 13, fontWeight: 600, padding: '0 8px' }}>Page {activityPage} of {totalPages}</span>
+                    <button className="btn-primary" onClick={() => setActivityPage(p => Math.min(totalPages, p + 1))} disabled={activityPage === totalPages} style={{ padding: '6px 12px', fontSize: 13 }}>Next</button>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}

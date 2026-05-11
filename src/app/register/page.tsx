@@ -117,29 +117,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Step indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
-          {['Details', 'Verify Email'].map((label, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: '50%',
-                  background: i === 0 && step === 'details' ? 'var(--navy-accent)' : i === 0 ? 'var(--emerald)' : step === 'otp' ? 'var(--navy-accent)' : '#f1f5f9',
-                  border: '2px solid',
-                  borderColor: i === 0 ? (step === 'otp' ? 'var(--emerald)' : 'var(--navy-accent)') : step === 'otp' ? 'var(--navy-accent)' : 'var(--border)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: i === 1 && step === 'details' ? 'var(--text-secondary)' : 'white',
-                }}>
-                  {i === 0 && step === 'otp' ? <CheckCircle size={12} /> : i + 1}
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: (i === 0 && step === 'details') || (i === 1 && step === 'otp') ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                  {label}
-                </span>
-              </div>
-              {i < 1 && <div style={{ width: 32, height: 1, background: step === 'otp' ? 'var(--emerald)' : 'var(--border)' }} />}
-            </div>
-          ))}
-        </div>
+
 
         <div className="glass-card" style={{ padding: 32 }}>
           {step === 'details' ? (
@@ -205,14 +183,6 @@ export default function RegisterPage() {
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
                   Min 8 chars, 1 uppercase, 1 number, 1 special char.
                 </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Organisation</label>
-                <select className="tdr-input" value={form.org} onChange={e => setForm({ ...form, org: e.target.value })}>
-                  <option value="org1">Org1</option>
-                  <option value="org2">Org2</option>
-                </select>
               </div>
 
               {error && (
