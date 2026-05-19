@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/hooks/useAuth'
 import { Shield, Search, ChevronDown, LogOut, User, Settings, Menu, X, RefreshCw, Bell, ExternalLink, Command, ShoppingBag } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
@@ -50,15 +51,15 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }: { sidebarOpen?:
 
 
           <Link href="/" className="flex items-center gap-4 group no-underline ml-2">
-            <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30 group-hover:rotate-6 transition-transform">
-              <Shield size={24} color="white" />
+            <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30 group-hover:rotate-6 transition-transform overflow-hidden">
+              <Image src="/smc-logo-white.png" alt="SMC Logo" width={44} height={44} style={{ objectFit: 'contain', width: '100%', height: '100%' }} />
             </div>
             <div className="flex flex-col">
               <span style={{ fontSize: 19, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                e-TDR <span className="text-blue-600">Portal</span>
+                e-TDR Portal
               </span>
               <span style={{ fontSize: 10, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>
-                Blockchain Enabled Trust
+                Surat Municipal Corporation
               </span>
             </div>
           </Link>

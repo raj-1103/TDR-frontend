@@ -14,6 +14,8 @@ import {
   getMarketplaceListings,
   getMyTDRs,
   getMyTransferHistory,
+  getMyBids,
+  getMyListings,
   MyDocument, 
   TransferRequest, 
   IssueRequest,
